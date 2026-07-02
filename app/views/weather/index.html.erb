@@ -1,0 +1,33 @@
+<%= render "weather/search" %>
+
+<!-- Weather Dashboard wrapped in Turbo Frame for auto-refresh -->
+<turbo-frame id="weather_forecast" data-controller="refresh" class="block w-full">
+  <% if @weather %>
+    <% current = @weather["current"] %>
+    <% hourly = @weather["hourly"] %>
+    <% daily = @weather["daily"] %>
+    <% current_info = WeatherService.weather_info(current["weather_code"]) %>
+
+    <%= render "weather/header" %>
+
+    <!-- Main Grid Dashboard -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Left 2 Columns: Weather details & Hourly Forecast & Map -->
+      <div class="lg:col-span-2 space-y-6">
+        <%= render "weather/map", current: current, current_info: current_info %>
+        <%= render "weather/hourly_forecast", hourly: hourly %>
+        <%= render "weather/favorites" %>
+      </div>
+
+      <div class="space-y-6">
+        <%= render "weather/current_weather", current: current, current_info: current_info %>
+        <%= render "weather/daily_forecast", daily: daily %>
+      </div>
+
+    </div>
+
+  <% else %>
+    <%= render "weather/error_state" %>
+  <% end %>
+</turbo-frame>

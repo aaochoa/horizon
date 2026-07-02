@@ -1,0 +1,37 @@
+<!-- 7-Day Forecast Card -->
+<div class="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/40 backdrop-blur-md p-6 shadow-lg dark:shadow-xl space-y-4 transition-colors duration-300">
+  <h3 class="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2">
+    <i data-lucide="calendar" class="w-5 h-5 text-cyan-555 dark:text-cyan-400"></i>
+    <span>7-Day Forecast</span>
+  </h3>
+
+  <div class="space-y-3">
+    <% daily["time"].each_with_index do |day_string, idx| %>
+      <% day = Date.parse(day_string) %>
+      <% max_temp = daily["temperature_2m_max"][idx].round %>
+      <% min_temp = daily["temperature_2m_min"][idx].round %>
+      <% d_info = WeatherService.weather_info(daily["weather_code"][idx]) %>
+
+      <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-100/40 dark:bg-slate-955/20 border border-slate-200/60 dark:border-slate-850 hover:bg-slate-150/60 dark:hover:bg-slate-950/40 transition">
+        <div class="w-24 text-left">
+          <p class="text-sm font-semibold text-slate-800 dark:text-slate-200">
+            <%= idx == 0 ? "Today" : day.strftime("%A") %>
+          </p>
+          <p class="text-[10px] text-slate-400 dark:text-slate-500"><%= day.strftime("%b %-d") %></p>
+        </div>
+
+        <div class="flex items-center gap-2 w-28 justify-center">
+          <i data-lucide="<%= d_info[:icon] %>" class="w-5 h-5 text-cyan-600 dark:text-cyan-400"></i>
+          <span class="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[80px]" title="<%= d_info[:description] %>">
+            <%= d_info[:description] %>
+          </span>
+        </div>
+
+        <div class="flex items-center gap-3 w-16 justify-end text-right">
+          <span class="text-sm font-bold text-slate-900 dark:text-white"><%= max_temp %>°</span>
+          <span class="text-xs text-slate-400 dark:text-slate-550 font-semibold"><%= min_temp %>°</span>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

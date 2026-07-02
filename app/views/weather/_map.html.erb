@@ -1,0 +1,20 @@
+<!-- Map Card -->
+<div class="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/40 backdrop-blur-md p-6 shadow-lg dark:shadow-xl space-y-4 transition-colors duration-300">
+  <div class="flex items-center justify-between">
+    <h3 class="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2">
+      <i data-lucide="map" class="w-5 h-5 text-cyan-555 dark:text-cyan-400"></i>
+      <span>Interactive Map</span>
+    </h3>
+    <span class="text-xs text-slate-500 dark:text-slate-400">Selected location</span>
+  </div>
+
+  <!-- Map container. Stimulus controller will render Leaflet map here. -->
+  <div data-controller="weather-map"
+       data-weather-map-lat-value="<%= @latitude %>"
+       data-weather-map-lon-value="<%= @longitude %>"
+       data-weather-map-name-value="<%= @location_name %>"
+       data-weather-map-temp-value="<%= current["temperature_2m"].round %>"
+       data-weather-map-desc-value="<%= current_info[:description] %>"
+       class="w-full h-80 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-850 shadow-inner z-10">
+  </div>
+</div>
