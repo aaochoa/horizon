@@ -4,6 +4,8 @@ class WeatherControllerTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:one)
     @@weather_mock = {
+      "timezone" => "UTC",
+      "timezone_abbreviation" => "UTC",
       "current" => {
         "temperature_2m" => 20,
         "relative_humidity_2m" => 50,
@@ -31,6 +33,7 @@ class WeatherControllerTest < ActionDispatch::IntegrationTest
     class << WeatherService
       alias_method :real_get_weather, :get_weather
       alias_method :real_search_cities, :search_cities
+      alias_method :real_reverse_geocode, :reverse_geocode
       
       def get_weather(lat, lon, force_refresh: false)
         @@weather_mock
@@ -39,6 +42,10 @@ class WeatherControllerTest < ActionDispatch::IntegrationTest
       def search_cities(query)
         @@cities_mock
       end
+
+      def reverse_geocode(lat, lon)
+        "Mock City, USA"
+      end
     end
   end
 
@@ -46,8 +53,10 @@ class WeatherControllerTest < ActionDispatch::IntegrationTest
     class << WeatherService
       alias_method :get_weather, :real_get_weather
       alias_method :search_cities, :real_search_cities
+      alias_method :reverse_geocode, :real_reverse_geocode
       remove_method :real_get_weather
       remove_method :real_search_cities
+      remove_method :real_reverse_geocode
     end
   end
 
@@ -103,5 +112,12 @@ class WeatherControllerTest < ActionDispatch::IntegrationTest
       delete favorite_location_path(favorite), params: { lat: 25.7617, lon: -80.1918, name: "Miami" }
     end
     assert_redirected_to root_path(lat: 25.7617, lon: -80.1918, name: "Miami")
+  end
+
+  test "dashboard should reverse-geocode location name and display local time if name is not provided" do
+    get root_path, params: { lat: "42.3601", lon: "-71.0589" }
+    assert_response :success
+    assert_select "h1", "Mock City, USA"
+    assert_select "div", text: /Local Time:/
   end
 end

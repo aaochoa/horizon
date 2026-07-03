@@ -99,19 +99,19 @@ export default class extends Controller {
   useCurrentLocation(event) {
     event.preventDefault()
     const button = event.currentTarget
-    const originalText = button.innerHTML
     
     button.disabled = true
-    button.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin text-cyan-400"></i> Locating...`
+    button.innerHTML = `<i data-lucide="loader" class="w-4.5 h-4.5 animate-spin text-cyan-500"></i>`
     if (typeof lucide !== 'undefined') lucide.createIcons()
-
+ 
     if (!navigator.geolocation) {
       alert("Geolocation is not supported by your browser.")
       button.disabled = false
-      button.innerHTML = originalText
+      button.innerHTML = `<i data-lucide="map-pin" class="w-4.5 h-4.5"></i>`
+      if (typeof lucide !== 'undefined') lucide.createIcons()
       return
     }
-
+ 
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const lat = position.coords.latitude
@@ -133,7 +133,7 @@ export default class extends Controller {
         console.error("Geolocation error:", error)
         alert(`Could not get location: ${error.message}`)
         button.disabled = false
-        button.innerHTML = originalText
+        button.innerHTML = `<i data-lucide="map-pin" class="w-4.5 h-4.5"></i>`
         if (typeof lucide !== 'undefined') lucide.createIcons()
       },
       { timeout: 10000 }

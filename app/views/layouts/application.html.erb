@@ -22,9 +22,9 @@
 
     <%= yield :head %>
 
-    <link rel="icon" href="/icon.png" type="image/png">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
+    <link rel="icon" href="/icon.svg?v=2" type="image/svg+xml">
+    <link rel="icon" href="/icon.png?v=2" type="image/png">
+    <link rel="apple-touch-icon" href="/icon.png?v=2">
 
     <!-- Leaflet.js Map CDN -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
@@ -53,10 +53,6 @@
             <a href="<%= root_path %>" class="text-slate-600 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-400 transition flex items-center gap-1.5 py-1 border-b-2 border-transparent hover:border-cyan-500">
               <i data-lucide="cloud" class="w-4 h-4"></i>
               <span>Weather</span>
-            </a>
-            <a href="<%= root_path(anchor: 'favorites') %>" class="text-slate-600 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-400 transition flex items-center gap-1.5 py-1 border-b-2 border-transparent hover:border-cyan-500">
-              <i data-lucide="heart" class="w-4 h-4"></i>
-              <span>Saved Locations</span>
             </a>
           </nav>
         </div>
@@ -101,13 +97,15 @@
     <% end %>
 
     <!-- Main Content Area -->
-    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+    <main class="<%= content_for?(:main_class) ? yield(:main_class) : "flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full" %>">
       <%= yield %>
     </main>
 
-    <footer class="border-t border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-950/40 py-6 mt-12 text-center text-xs text-slate-500 transition-colors duration-300">
-      <p>&copy; <%= Time.current.year %> Horizon Weather. Powered by Open-Meteo & Leaflet.</p>
-    </footer>
+    <% unless content_for?(:hide_footer) %>
+      <footer class="border-t border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-950/40 py-6 mt-12 text-center text-xs text-slate-500 transition-colors duration-300">
+        <p>&copy; <%= Time.current.year %> Horizon Weather. Powered by Open-Meteo & Leaflet.</p>
+      </footer>
+    <% end %>
 
     <!-- Initialize Lucide Icons -->
     <script>
@@ -117,6 +115,11 @@
         }
       });
       document.addEventListener("turbo:render", function() {
+        if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+        }
+      });
+      document.addEventListener("turbo:frame-load", function() {
         if (typeof lucide !== 'undefined') {
           lucide.createIcons();
         }

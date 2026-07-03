@@ -17,15 +17,22 @@ Horizon Weather is a modern, high-performance, glassmorphic Ruby on Rails 8 weat
 ## 🌟 Key Features
 
 - **Keyless API Integration**: Retrieves weather forecasts and geocoding details using keyless endpoints from **Open-Meteo**, making setup instantaneous.
-- **Hotwire Architecture**: Utilizes **Turbo Drive, Turbo Frames, and Stimulus JS** for real-time partial page updates and smooth, SPA-like responsiveness without the overhead of heavy JavaScript frameworks.
+- **Hotwire Architecture**: Utilizes **Turbo Drive, Turbo Frames, and Stimulus JS** for real-time partial page updates and smooth, SPA-like responsiveness. Scopes frame reloads strictly to the weather details, keeping the map and search bar active and untouched.
 - **Resilient Service Layer**: Gracefully handles network timeouts (`Net::OpenTimeout`) and API failures by returning rich, structured mock fallback weather data to ensure the UI remains fully functional offline or during local development demos.
 - **Smart Caching**: Implements custom caching to minimize external API hits:
   - Weather forecasts cached for **15 minutes**.
   - Autocomplete location results cached for **1 day**.
+  - Reverse geocoding cached for **30 days** using Solid Cache.
   - Fully supports manual force refreshes when requested.
-- **Interactive Weather Map**: Uses **Leaflet.js** and OpenStreetMap to display geographic weather visualizers.
+- **Interactive Weather Map**: Uses **Leaflet.js** and OpenStreetMap to display geographic weather visualizers. It features:
+  - **Full-Screen Desktop Mode**: A Google Maps-style fullscreen layout with floating glassmorphic weather cards.
+  - **Interactive Selection**: Click anywhere on the map to instantly select coordinates and reload the local weather.
+  - **Map-Level Geolocation**: A floating crosshair "Locate Me" button to retrieve and load the user's current coordinates.
+- **Geocoding & Local Time**:
+  - Automatically reverse-geocodes coordinates into English location names (e.g. "Seoul, South Korea") using OpenStreetMap's **Nominatim API** (with a custom User-Agent).
+  - Timezone-aware local time and date rendering in both the sidebar location header and the map marker popup tooltip.
+  - Aligns the hourly forecast to start exactly from the city's current local hour and highlights the current hour card as **Now**.
 - **Dynamic Light/Dark Theme**: A fully custom theme toggler built with Tailwind CSS v4 custom variants (`@custom-variant dark`) and a persistent Stimulus controller.
-- **Secure Authentication & Favorites**: Registered users can save their preferred cities to a personalized dashboard, updating instantly via Turbo Streams.
 
 ---
 
@@ -35,7 +42,7 @@ Horizon Weather is a modern, high-performance, glassmorphic Ruby on Rails 8 weat
 - **Database**: PostgreSQL
 - **Caching & Jobs**: Solid Cache & Solid Queue
 - **Styling**: Tailwind CSS v4 with custom dark-mode selectors
-- **Icons**: Lucide Icons (rendered dynamically via Stimulus)
+- **Icons**: Lucide Icons (rendered dynamically via Stimulus and reloaded on Turbo frame renders)
 - **Frontend Interaction**: Hotwire (Turbo + Stimulus) & Leaflet.js
 - **Testing**: Minitest with customized API stubbing
 
@@ -74,13 +81,15 @@ Ensure you have the following installed on your local system:
 
 ## 📂 Project Structure
 
-- [WeatherService](file:///Users/anderson/Documents/dev/horizon/app/services/weather_service.rb): Core service managing Open-Meteo connections, geocoding lookups, fallback demo generation, and rails caching policies.
+- [WeatherService](file:///Users/anderson/Documents/dev/horizon/app/services/weather_service.rb): Core service managing Open-Meteo connections, Nominatim reverse geocoding lookups, fallback demo generation, and rails caching policies.
 - [WeatherController](file:///Users/anderson/Documents/dev/horizon/app/controllers/weather_controller.rb): Manages the main forecast index view, coordinates checks, and routes autocomplete search results.
 - **Stimulus Controllers** ([app/javascript/controllers](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers)):
-  - [theme_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/theme_controller.js): Handles glassmorphic light/dark mode toggling and standard localStorage persistence.
-  - [autocomplete_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/autocomplete_controller.js): powers the search autocomplete dropdown for global cities.
-  - [weather_map_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/weather_map_controller.js): Initializes the interactive Leaflet map layer for the current coordinates.
-  - [refresh_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/refresh_controller.js): Triggers periodic checks and forced refresh operations.
+  - [theme_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/theme_controller.js): Handles light/dark mode toggling with dynamic icon updating.
+  - [autocomplete_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/autocomplete_controller.js): Powers the search autocomplete dropdown for global cities.
+  - [weather_map_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/weather_map_controller.js): Initializes the interactive Leaflet map and updates it in-place using Stimulus value change callbacks.
+  - [local_time_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/local_time_controller.js): Formats the "Updated" forecast timestamp in the user's browser local system time.
+  - [map_locate_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/map_locate_controller.js): Manages the floating GPS button geolocating actions.
+  - [refresh_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/refresh_controller.js): Triggers periodic checks for only the weather cards without reloading the map or search bar.
 
 ---
 
