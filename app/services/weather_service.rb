@@ -17,6 +17,10 @@ class WeatherService
         fetch_weather_from_api(lat, lon)
       end
 
+      if data && data["daily"]
+        inject_lunar_data!(data)
+      end
+
       data || fallback_weather_data(lat, lon)
     rescue => e
       Rails.logger.error "WeatherService error: #{e.message}"
@@ -113,8 +117,64 @@ class WeatherService
 
     private
 
+    def inject_lunar_data!(data)
+      daily = data["daily"]
+      return unless daily
+      
+      times = daily["time"] || []
+      sunrises = daily["sunrise"] || []
+      sunsets = daily["sunset"] || []
+      
+      moon_phases = []
+      moonrises = []
+      moonsets = []
+      
+      times.each_with_index do |time_str, index|
+        date = Date.parse(time_str) rescue Date.current
+        phase = calculate_moon_phase(date)
+        moon_phases << phase
+        
+        sunrise_str = sunrises[index]
+        sunset_str = sunsets[index]
+        
+        m_rise, m_set = calculate_moonrise_moonset(date, sunrise_str, sunset_str, phase)
+        moonrises << m_rise
+        moonsets << m_set
+      end
+      
+      daily["moon_phase"] = moon_phases
+      daily["moonrise"] = moonrises
+      daily["moonset"] = moonsets
+    end
+
+    def calculate_moon_phase(date)
+      epoch = Time.utc(2000, 1, 6, 18, 14)
+      lunar_cycle = 29.530588853
+      
+      diff = date.to_time.utc.to_f - epoch.to_f
+      days_since_new = (diff / 86400.0) % lunar_cycle
+      days_since_new / lunar_cycle
+    end
+
+    def calculate_moonrise_moonset(date, sunrise_str, sunset_str, phase_val)
+      return [nil, nil] unless sunrise_str && sunset_str
+      
+      sunrise = Time.parse(sunrise_str) rescue nil
+      sunset = Time.parse(sunset_str) rescue nil
+      return [nil, nil] unless sunrise && sunset
+      
+      # Moonrise/moonset offset in hours based on phase
+      moonrise_offset = phase_val * 24.0
+      moonset_offset = phase_val * 24.0
+      
+      moonrise = sunrise + moonrise_offset.hours
+      moonset = sunset + moonset_offset.hours
+      
+      [moonrise.strftime("%Y-%m-%dT%H:%M"), moonset.strftime("%Y-%m-%dT%H:%M")]
+    end
+
     def fetch_weather_from_api(lat, lon)
-      url = "https://api.open-meteo.com/v1/forecast?latitude=#{lat}&longitude=#{lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,sunrise,sunset,moonrise,moonset,moon_phase&timezone=auto"
+      url = "https://api.open-meteo.com/v1/forecast?latitude=#{lat}&longitude=#{lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,sunrise,sunset&timezone=auto"
       
       uri = URI(url)
       response = Net::HTTP.get_response(uri)
