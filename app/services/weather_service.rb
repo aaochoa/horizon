@@ -73,10 +73,48 @@ class WeatherService
       end
     end
 
+    def moon_phase_details(phase_value)
+      phase_value = phase_value.to_f
+      
+      if phase_value == 0 || phase_value == 1
+        name = "New Moon"
+        emoji = "🌑"
+      elsif phase_value > 0 && phase_value < 0.25
+        name = "Waxing Crescent"
+        emoji = "🌒"
+      elsif phase_value == 0.25
+        name = "First Quarter"
+        emoji = "🌓"
+      elsif phase_value > 0.25 && phase_value < 0.5
+        name = "Waxing Gibbous"
+        emoji = "🌔"
+      elsif phase_value == 0.5
+        name = "Full Moon"
+        emoji = "🌕"
+      elsif phase_value > 0.5 && phase_value < 0.75
+        name = "Waning Gibbous"
+        emoji = "🌖"
+      elsif phase_value == 0.75
+        name = "Third Quarter"
+        emoji = "🌗"
+      else
+        name = "Waning Crescent"
+        emoji = "🌘"
+      end
+      
+      illumination = if phase_value <= 0.5
+        (phase_value * 2 * 100).round
+      else
+        ((1 - phase_value) * 2 * 100).round
+      end
+      
+      { name: name, emoji: emoji, illumination: illumination }
+    end
+
     private
 
     def fetch_weather_from_api(lat, lon)
-      url = "https://api.open-meteo.com/v1/forecast?latitude=#{lat}&longitude=#{lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max&timezone=auto"
+      url = "https://api.open-meteo.com/v1/forecast?latitude=#{lat}&longitude=#{lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,sunrise,sunset,moonrise,moonset,moon_phase&timezone=auto"
       
       uri = URI(url)
       response = Net::HTTP.get_response(uri)
@@ -141,7 +179,12 @@ class WeatherService
           "weather_code" => [2, 1, 0, 3, 61, 80, 2],
           "temperature_2m_max" => [24, 25, 27, 23, 20, 22, 24],
           "temperature_2m_min" => [15, 16, 17, 14, 12, 13, 15],
-          "precipitation_sum" => [0.0, 0.0, 0.0, 0.5, 4.2, 1.8, 0.0]
+          "precipitation_sum" => [0.0, 0.0, 0.0, 0.5, 4.2, 1.8, 0.0],
+          "sunrise" => Array.new(7) { |i| (Time.current.beginning_of_day + i.days + 6.hours).strftime("%Y-%m-%dT%H:%M") },
+          "sunset" => Array.new(7) { |i| (Time.current.beginning_of_day + i.days + 20.hours).strftime("%Y-%m-%dT%H:%M") },
+          "moonrise" => Array.new(7) { |i| (Time.current.beginning_of_day + i.days + 22.hours).strftime("%Y-%m-%dT%H:%M") },
+          "moonset" => Array.new(7) { |i| (Time.current.beginning_of_day + i.days + 8.hours).strftime("%Y-%m-%dT%H:%M") },
+          "moon_phase" => [0.1, 0.25, 0.4, 0.5, 0.65, 0.8, 0.95]
         },
         "is_fallback" => true
       }
