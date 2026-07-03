@@ -17,12 +17,13 @@
       <div class="lg:col-span-2 space-y-6">
         <%= render "weather/map", current: current, current_info: current_info %>
         <%= render "weather/hourly_forecast", hourly: hourly %>
-        <%= render "weather/favorites" %>
+        <%= render "weather/daily_forecast", daily: daily %>
       </div>
 
       <div class="space-y-6">
         <%= render "weather/current_weather", current: current, current_info: current_info %>
-        <%= render "weather/daily_forecast", daily: daily %>
+        <%= render "weather/moon_info", daily: daily %>
+        <%= render "weather/favorites" %>
       </div>
 
     </div>

@@ -53,4 +53,31 @@ class WeatherServiceTest < ActiveSupport::TestCase
       end
     end
   end
+
+  test "moon_phase_details returns correct description, emoji, and illumination" do
+    new_moon = WeatherService.moon_phase_details(0)
+    assert_equal "New Moon", new_moon[:name]
+    assert_equal "🌑", new_moon[:emoji]
+    assert_equal 0, new_moon[:illumination]
+
+    first_quarter = WeatherService.moon_phase_details(0.25)
+    assert_equal "First Quarter", first_quarter[:name]
+    assert_equal "🌓", first_quarter[:emoji]
+    assert_equal 50, first_quarter[:illumination]
+
+    full_moon = WeatherService.moon_phase_details(0.5)
+    assert_equal "Full Moon", full_moon[:name]
+    assert_equal "🌕", full_moon[:emoji]
+    assert_equal 100, full_moon[:illumination]
+
+    third_quarter = WeatherService.moon_phase_details(0.75)
+    assert_equal "Third Quarter", third_quarter[:name]
+    assert_equal "🌗", third_quarter[:emoji]
+    assert_equal 50, third_quarter[:illumination]
+
+    gibbous = WeatherService.moon_phase_details(0.4)
+    assert_equal "Waxing Gibbous", gibbous[:name]
+    assert_equal "🌔", gibbous[:emoji]
+    assert_equal 80, gibbous[:illumination]
+  end
 end
