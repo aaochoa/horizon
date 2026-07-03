@@ -15,7 +15,7 @@
             <%= form.hidden_field :name, value: @location_name %>
             <%= form.hidden_field :latitude, value: @latitude %>
             <%= form.hidden_field :longitude, value: @longitude %>
-            <%= form.button type: :submit, class: "p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/40 dark:hover:bg-slate-700/40 border border-slate-200 dark:border-slate-700 hover:border-slate-355 dark:hover:border-slate-500 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition cursor-pointer flex items-center justify-center", title: "Add to favorites" do %>
+            <%= form.button type: :submit, class: "p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/40 dark:hover:bg-slate-700/40 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-500 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition cursor-pointer flex items-center justify-center", title: "Add to favorites" do %>
               <i data-lucide="heart" class="w-5 h-5"></i>
             <% end %>
           <% end %>
@@ -35,7 +35,7 @@
     <% end %>
   </div>
 
-  <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-850 text-xs text-slate-600 dark:text-slate-400 transition-colors duration-300">
+  <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 transition-colors duration-300">
     <% if @weather["is_fallback"] %>
       <span class="relative flex h-2 w-2">
         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -44,7 +44,7 @@
       <span class="text-amber-600 dark:text-amber-400 font-semibold">Offline Mode (Demo Data)</span>
     <% else %>
       <span class="relative flex h-2 w-2">
-        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-455 dark:bg-emerald-400 opacity-75"></span>
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 dark:bg-emerald-400 opacity-75"></span>
         <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
       </span>
       <span>Auto-updating forecast</span>

@@ -31,7 +31,7 @@
         <span><%= details[:illumination] %>% Illuminated</span>
       </div>
     </div>
-    <div class="w-16 h-16 rounded-full bg-slate-100/50 dark:bg-slate-850/20 border border-slate-200/60 dark:border-slate-800/80 flex items-center justify-center shadow-inner">
+    <div class="w-16 h-16 rounded-full bg-slate-100/50 dark:bg-slate-800/20 border border-slate-200/60 dark:border-slate-800/80 flex items-center justify-center shadow-inner">
       <span class="text-4xl select-none leading-none"><%= details[:emoji] %></span>
     </div>
   </div>
@@ -43,14 +43,14 @@
         <i data-lucide="sunrise" class="w-4 h-4 text-amber-500"></i>
         <div class="flex flex-col">
           <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wide">Sunrise</span>
-          <strong class="text-slate-850 dark:text-slate-200"><%= format_time.call(daily["sunrise"]&.first) %></strong>
+          <strong class="text-slate-800 dark:text-slate-200"><%= format_time.call(daily["sunrise"]&.first) %></strong>
         </div>
       </div>
       <div class="flex items-center gap-2 text-slate-600 dark:text-slate-300">
         <i data-lucide="sunset" class="w-4 h-4 text-orange-500"></i>
         <div class="flex flex-col">
           <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wide">Sunset</span>
-          <strong class="text-slate-850 dark:text-slate-200"><%= format_time.call(daily["sunset"]&.first) %></strong>
+          <strong class="text-slate-800 dark:text-slate-200"><%= format_time.call(daily["sunset"]&.first) %></strong>
         </div>
       </div>
     </div>
@@ -60,14 +60,14 @@
         <i data-lucide="moon" class="w-4 h-4 text-indigo-400"></i>
         <div class="flex flex-col">
           <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wide">Moonrise</span>
-          <strong class="text-slate-850 dark:text-slate-200"><%= format_time.call(daily["moonrise"]&.first) %></strong>
+          <strong class="text-slate-800 dark:text-slate-200"><%= format_time.call(daily["moonrise"]&.first) %></strong>
         </div>
       </div>
       <div class="flex items-center gap-2 text-slate-600 dark:text-slate-300">
         <i data-lucide="moon" class="w-4 h-4 text-purple-400 opacity-60"></i>
         <div class="flex flex-col">
           <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wide">Moonset</span>
-          <strong class="text-slate-850 dark:text-slate-200"><%= format_time.call(daily["moonset"]&.first) %></strong>
+          <strong class="text-slate-800 dark:text-slate-200"><%= format_time.call(daily["moonset"]&.first) %></strong>
         </div>
       </div>
     </div>

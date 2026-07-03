@@ -14,19 +14,19 @@
     
     <div class="grid grid-cols-2 gap-4 text-xs">
       <div class="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-        <i data-lucide="thermometer" class="w-4 h-4 text-cyan-555 dark:text-cyan-400"></i>
+        <i data-lucide="thermometer" class="w-4 h-4 text-cyan-500 dark:text-cyan-400"></i>
         <span>Feels like <strong><%= current["apparent_temperature"].round %>°C</strong></span>
       </div>
       <div class="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-        <i data-lucide="droplets" class="w-4 h-4 text-cyan-555 dark:text-cyan-400"></i>
+        <i data-lucide="droplets" class="w-4 h-4 text-cyan-500 dark:text-cyan-400"></i>
         <span>Humidity <strong><%= current["relative_humidity_2m"] %>%</strong></span>
       </div>
       <div class="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-        <i data-lucide="wind" class="w-4 h-4 text-cyan-555 dark:text-cyan-400"></i>
+        <i data-lucide="wind" class="w-4 h-4 text-cyan-500 dark:text-cyan-400"></i>
         <span>Wind <strong><%= current["wind_speed_10m"].round %> km/h</strong></span>
       </div>
       <div class="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-        <i data-lucide="cloud-rain" class="w-4 h-4 text-cyan-555 dark:text-cyan-400"></i>
+        <i data-lucide="cloud-rain" class="w-4 h-4 text-cyan-500 dark:text-cyan-400"></i>
         <span>Precip. <strong><%= current["precipitation"] %> mm</strong></span>
       </div>
     </div>
