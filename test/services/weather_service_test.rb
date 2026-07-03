@@ -12,7 +12,7 @@ class WeatherServiceTest < ActiveSupport::TestCase
 
     unknown = WeatherService.weather_info(999)
     assert_equal "Unknown", unknown[:description]
-    assert_equal "help", unknown[:icon]
+    assert_equal "help-circle", unknown[:icon]
   end
 
   test "get_weather fetches and returns weather data" do

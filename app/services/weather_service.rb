@@ -8,7 +8,7 @@ class WeatherService
   class << self
     def get_weather(lat, lon, force_refresh: false)
       cache_key = "weather_forecast_#{lat}_#{lon}"
-      
+
       if force_refresh
         Rails.cache.delete(cache_key)
       end
@@ -41,6 +41,16 @@ class WeatherService
       fallback_cities(query)
     end
 
+    def reverse_geocode(lat, lon)
+      cache_key = "reverse_geocode_#{lat.to_f.round(4)}_#{lon.to_f.round(4)}"
+      Rails.cache.fetch(cache_key, expires_in: 30.days) do
+        fetch_city_from_coords(lat.to_f.round(4), lon.to_f.round(4))
+      end
+    rescue => e
+      Rails.logger.error "WeatherService reverse geocoding error: #{e.message}"
+      "Coordinates: #{lat.to_f.round(4)}, #{lon.to_f.round(4)}"
+    end
+
     def weather_info(code)
       # WMO Weather interpretation codes (WMOCodes)
       case code
@@ -51,7 +61,7 @@ class WeatherService
       when 2
         { description: "Partly Cloudy", icon: "cloud" }
       when 3
-        { description: "Overcast", icon: "clouds" }
+        { description: "Overcast", icon: "cloudy" }
       when 45, 48
         { description: "Foggy", icon: "cloud-fog" }
       when 51, 53, 55
@@ -67,19 +77,19 @@ class WeatherService
       when 77
         { description: "Snow Grains", icon: "cloud-snow" }
       when 80, 81, 82
-        { description: "Rain Showers", icon: "cloud-lightning-rain" }
+        { description: "Rain Showers", icon: "cloud-rain" }
       when 85, 86
         { description: "Snow Showers", icon: "cloud-snow" }
       when 95, 96, 99
         { description: "Thunderstorm", icon: "cloud-lightning" }
       else
-        { description: "Unknown", icon: "help" }
+        { description: "Unknown", icon: "help-circle" }
       end
     end
 
     def moon_phase_details(phase_value)
       phase_value = phase_value.to_f
-      
+
       if phase_value == 0 || phase_value == 1
         name = "New Moon"
         emoji = "🌑"
@@ -105,13 +115,13 @@ class WeatherService
         name = "Waning Crescent"
         emoji = "🌘"
       end
-      
+
       illumination = if phase_value <= 0.5
         (phase_value * 2 * 100).round
       else
         ((1 - phase_value) * 2 * 100).round
       end
-      
+
       { name: name, emoji: emoji, illumination: illumination }
     end
 
@@ -120,28 +130,28 @@ class WeatherService
     def inject_lunar_data!(data)
       daily = data["daily"]
       return unless daily
-      
+
       times = daily["time"] || []
       sunrises = daily["sunrise"] || []
       sunsets = daily["sunset"] || []
-      
+
       moon_phases = []
       moonrises = []
       moonsets = []
-      
+
       times.each_with_index do |time_str, index|
         date = Date.parse(time_str) rescue Date.current
         phase = calculate_moon_phase(date)
         moon_phases << phase
-        
+
         sunrise_str = sunrises[index]
         sunset_str = sunsets[index]
-        
+
         m_rise, m_set = calculate_moonrise_moonset(date, sunrise_str, sunset_str, phase)
         moonrises << m_rise
         moonsets << m_set
       end
-      
+
       daily["moon_phase"] = moon_phases
       daily["moonrise"] = moonrises
       daily["moonset"] = moonsets
@@ -150,35 +160,35 @@ class WeatherService
     def calculate_moon_phase(date)
       epoch = Time.utc(2000, 1, 6, 18, 14)
       lunar_cycle = 29.530588853
-      
+
       diff = date.to_time.utc.to_f - epoch.to_f
       days_since_new = (diff / 86400.0) % lunar_cycle
       days_since_new / lunar_cycle
     end
 
     def calculate_moonrise_moonset(date, sunrise_str, sunset_str, phase_val)
-      return [nil, nil] unless sunrise_str && sunset_str
-      
+      return [ nil, nil ] unless sunrise_str && sunset_str
+
       sunrise = Time.parse(sunrise_str) rescue nil
       sunset = Time.parse(sunset_str) rescue nil
-      return [nil, nil] unless sunrise && sunset
-      
+      return [ nil, nil ] unless sunrise && sunset
+
       # Moonrise/moonset offset in hours based on phase
       moonrise_offset = phase_val * 24.0
       moonset_offset = phase_val * 24.0
-      
+
       moonrise = sunrise + moonrise_offset.hours
       moonset = sunset + moonset_offset.hours
-      
-      [moonrise.strftime("%Y-%m-%dT%H:%M"), moonset.strftime("%Y-%m-%dT%H:%M")]
+
+      [ moonrise.strftime("%Y-%m-%dT%H:%M"), moonset.strftime("%Y-%m-%dT%H:%M") ]
     end
 
     def fetch_weather_from_api(lat, lon)
       url = "https://api.open-meteo.com/v1/forecast?latitude=#{lat}&longitude=#{lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,sunrise,sunset&timezone=auto"
-      
+
       uri = URI(url)
       response = Net::HTTP.get_response(uri)
-      
+
       if response.is_a?(Net::HTTPSuccess)
         JSON.parse(response.body)
       else
@@ -190,16 +200,16 @@ class WeatherService
     def fetch_cities_from_api(query)
       escaped_query = CGI.escape(query)
       url = "https://geocoding-api.open-meteo.com/v1/search?name=#{escaped_query}&count=8&language=en&format=json"
-      
+
       uri = URI(url)
       response = Net::HTTP.get_response(uri)
-      
+
       if response.is_a?(Net::HTTPSuccess)
         data = JSON.parse(response.body)
         results = data["results"] || []
         results.map do |city|
           {
-            name: [city["name"], city["admin1"], city["country"]].compact.join(", "),
+            name: [ city["name"], city["admin1"], city["country"] ].compact.join(", "),
             latitude: city["latitude"],
             longitude: city["longitude"],
             country: city["country"],
@@ -210,6 +220,37 @@ class WeatherService
         Rails.logger.error "Open-Meteo Geocoding API failure: #{response.code} #{response.message}"
         []
       end
+    end
+
+    def fetch_city_from_coords(lat, lon)
+      url = "https://nominatim.openstreetmap.org/reverse?format=json&lat=#{lat}&lon=#{lon}&zoom=10&addressdetails=1&accept-language=en"
+      uri = URI(url)
+
+      req = Net::HTTP::Get.new(uri)
+      req["User-Agent"] = "HorizonWeather/1.0 (contact: aaochoa@horizon.com)"
+
+      response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https") do |http|
+        http.request(req)
+      end
+
+      if response.is_a?(Net::HTTPSuccess)
+        data = JSON.parse(response.body)
+        address = data["address"]
+        if address
+          city = address["city"] || address["town"] || address["village"] || address["municipality"] || address["suburb"]
+          state = address["state"] || address["region"]
+          country = address["country"]
+          [ city, state, country ].compact.join(", ")
+        else
+          data["display_name"] || "Coordinates: #{lat}, #{lon}"
+        end
+      else
+        Rails.logger.error "Nominatim Reverse Geocoding API failure: #{response.code} #{response.message}"
+        "Coordinates: #{lat}, #{lon}"
+      end
+    rescue => e
+      Rails.logger.error "Nominatim API fetch error: #{e.message}"
+      "Coordinates: #{lat}, #{lon}"
     end
 
     def fallback_weather_data(lat, lon)
@@ -231,20 +272,20 @@ class WeatherService
         "hourly" => {
           "time" => Array.new(24) { |i| (Time.current + i.hours).strftime("%Y-%m-%dT%H:00") },
           "temperature_2m" => Array.new(24) { |i| 21.5 + Math.sin(i / 3.0) * 3 },
-          "precipitation_probability" => Array.new(24) { |i| [0, 10, 20, 30][i % 4] },
+          "precipitation_probability" => Array.new(24) { |i| [ 0, 10, 20, 30 ][i % 4] },
           "weather_code" => Array.new(24) { 2 }
         },
         "daily" => {
           "time" => Array.new(7) { |i| (Date.current + i.days).strftime("%Y-%m-%d") },
-          "weather_code" => [2, 1, 0, 3, 61, 80, 2],
-          "temperature_2m_max" => [24, 25, 27, 23, 20, 22, 24],
-          "temperature_2m_min" => [15, 16, 17, 14, 12, 13, 15],
-          "precipitation_sum" => [0.0, 0.0, 0.0, 0.5, 4.2, 1.8, 0.0],
+          "weather_code" => [ 2, 1, 0, 3, 61, 80, 2 ],
+          "temperature_2m_max" => [ 24, 25, 27, 23, 20, 22, 24 ],
+          "temperature_2m_min" => [ 15, 16, 17, 14, 12, 13, 15 ],
+          "precipitation_sum" => [ 0.0, 0.0, 0.0, 0.5, 4.2, 1.8, 0.0 ],
           "sunrise" => Array.new(7) { |i| (Time.current.beginning_of_day + i.days + 6.hours).strftime("%Y-%m-%dT%H:%M") },
           "sunset" => Array.new(7) { |i| (Time.current.beginning_of_day + i.days + 20.hours).strftime("%Y-%m-%dT%H:%M") },
           "moonrise" => Array.new(7) { |i| (Time.current.beginning_of_day + i.days + 22.hours).strftime("%Y-%m-%dT%H:%M") },
           "moonset" => Array.new(7) { |i| (Time.current.beginning_of_day + i.days + 8.hours).strftime("%Y-%m-%dT%H:%M") },
-          "moon_phase" => [0.1, 0.25, 0.4, 0.5, 0.65, 0.8, 0.95]
+          "moon_phase" => [ 0.1, 0.25, 0.4, 0.5, 0.65, 0.8, 0.95 ]
         },
         "is_fallback" => true
       }

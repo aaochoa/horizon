@@ -1,34 +1,71 @@
-<%= render "weather/search" %>
+<% content_for :main_class, "flex-grow w-full relative" %>
+<% content_for :hide_footer, true %>
 
-<!-- Weather Dashboard wrapped in Turbo Frame for auto-refresh -->
-<turbo-frame id="weather_forecast" data-controller="refresh" class="block w-full">
   <% if @weather %>
     <% current = @weather["current"] %>
     <% hourly = @weather["hourly"] %>
     <% daily = @weather["daily"] %>
     <% current_info = WeatherService.weather_info(current["weather_code"]) %>
 
-    <%= render "weather/header" %>
-
-    <!-- Main Grid Dashboard -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-      <!-- Left 2 Columns: Weather details & Hourly Forecast & Map -->
-      <div class="lg:col-span-2 space-y-6">
-        <%= render "weather/map", current: current, current_info: current_info %>
-        <%= render "weather/hourly_forecast", hourly: hourly %>
-        <%= render "weather/daily_forecast", daily: daily %>
+    <!-- Outer layout container:
+         On mobile: normal column layout, scrolling page.
+         On desktop: non-scrolling full-viewport layout containing absolute positioned map. -->
+    <div class="relative w-full min-h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)] flex flex-col lg:overflow-hidden bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
+      
+      <!-- 1. Search Bar:
+           On mobile: flows at the top of the column with padding.
+           On desktop: floats absolutely in the top-left corner on top of the map. -->
+      <div class="w-full px-4 pt-4 lg:p-0 lg:absolute lg:top-6 lg:left-6 lg:w-[362px] lg:z-20 pointer-events-auto">
+        <%= render "weather/search" %>
       </div>
 
-      <div class="space-y-6">
-        <%= render "weather/current_weather", current: current, current_info: current_info %>
-        <%= render "weather/moon_info", daily: daily %>
-        <%= render "weather/favorites" %>
+      <!-- 2. Interactive Map:
+           On mobile: rounded card with fixed height.
+           On desktop: absolute fill of the background. -->
+      <div class="w-full px-4 py-2 lg:p-0 lg:absolute lg:inset-0 lg:z-0 lg:h-full">
+        <div class="w-full h-80 lg:h-full relative">
+          <%= render "weather/map", current: current, current_info: current_info %>
+        </div>
       </div>
+
+      <!-- 3. Sidebar/Details Container:
+           On mobile: normal vertical flow below map.
+           On desktop: absolute layout overlaying the left side of the map with scrollable details.
+           Wrapped in Turbo Frame so forecast updates ONLY reload the sidebar cards and not the map or search bar. -->
+      <turbo-frame id="weather_forecast" data-controller="refresh" class="w-full lg:absolute lg:top-0 lg:left-0 lg:bottom-0 lg:w-[410px] lg:z-10 lg:pointer-events-none flex flex-col p-4 lg:p-6 lg:max-h-full lg:pt-[88px]">
+        <div class="w-full pointer-events-auto flex-1 space-y-6 overflow-y-auto pr-1 lg:max-h-full scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-800">
+          
+          <!-- Location Header Card -->
+          <div class="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 backdrop-blur-md p-6 shadow-lg dark:shadow-xl transition-colors duration-300">
+            <%= render "weather/header" %>
+          </div>
+
+          <!-- Current Weather Card -->
+          <%= render "weather/current_weather", current: current, current_info: current_info %>
+
+          <!-- Hourly Forecast Card -->
+          <%= render "weather/hourly_forecast", hourly: hourly %>
+
+          <!-- Daily Forecast Card -->
+          <%= render "weather/daily_forecast", daily: daily %>
+
+          <!-- Moon Info Card -->
+          <%= render "weather/moon_info", daily: daily %>
+
+          <!-- Saved Locations Card -->
+          <%= render "weather/favorites" %>
+
+          <!-- Mini Sidebar Footer -->
+          <div class="text-center text-[10px] text-slate-400 dark:text-slate-500 py-4 select-none">
+            &copy; <%= Time.current.year %> Horizon Weather. Powered by Open-Meteo & Leaflet.
+          </div>
+        </div>
+      </turbo-frame>
 
     </div>
 
   <% else %>
-    <%= render "weather/error_state" %>
+    <div class="max-w-7xl mx-auto px-4 py-8">
+      <%= render "weather/error_state" %>
+    </div>
   <% end %>
-</turbo-frame>

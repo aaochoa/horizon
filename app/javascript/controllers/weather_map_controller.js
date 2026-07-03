@@ -1,12 +1,14 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
+  static targets = ["canvas"]
   static values = {
     lat: Number,
     lon: Number,
     name: String,
     temp: String,
-    desc: String
+    desc: String,
+    time: String
   }
 
   connect() {
@@ -42,11 +44,16 @@ export default class extends Controller {
     const lat = this.latValue
     const lon = this.lonValue
 
-    // Initialize Leaflet Map
-    this.map = L.map(this.element, {
-      zoomControl: true,
-      scrollWheelZoom: false
+    // Initialize Leaflet Map on the canvas target
+    this.map = L.map(this.canvasTarget, {
+      zoomControl: false,
+      scrollWheelZoom: true
     }).setView([lat, lon], 10)
+
+    // Move Zoom controls to bottom-right to avoid overlapping the left sidebar
+    L.control.zoom({
+      position: 'bottomright'
+    }).addTo(this.map)
 
     const isDark = document.documentElement.classList.contains("dark")
     const tileUrl = isDark 
@@ -82,25 +89,84 @@ export default class extends Controller {
     this.marker = L.marker([lat, lon], { icon: customIcon }).addTo(this.map)
 
     // Bind Popup with weather status
-    const popupContent = `
-      <div class="p-2 text-slate-900 font-sans">
-        <h4 class="font-bold text-sm leading-tight">${this.nameValue}</h4>
-        <div class="flex items-center gap-1.5 mt-1">
-          <span class="text-lg font-extrabold text-slate-800">${this.tempValue}°C</span>
-          <span class="text-xs font-semibold px-1.5 py-0.5 rounded bg-cyan-100 text-cyan-800">${this.descValue}</span>
-        </div>
-        <p class="text-[10px] text-slate-500 mt-1">Coordinates: ${lat.toFixed(4)}, ${lon.toFixed(4)}</p>
-      </div>
-    `
-
+    const popupContent = this.getPopupContent(lat, lon)
     this.marker.bindPopup(popupContent).openPopup()
+
+    // Bind click listener to select places on click
+    this.map.on("click", (e) => {
+      const { lat, lng } = e.latlng
+      this.selectCoordinates(lat, lng)
+    })
+
+    // Ensure Leaflet updates size if the layout is dynamically rendered/resized
+    setTimeout(() => {
+      if (this.map) {
+        this.map.invalidateSize()
+      }
+    }, 100)
   }
+
+  selectCoordinates(lat, lon) {
+    const url = new URL(window.location.origin)
+    url.searchParams.set("lat", lat.toFixed(4))
+    url.searchParams.set("lon", lon.toFixed(4))
+
+    if (window.Turbo) {
+      window.Turbo.visit(url.toString())
+    } else {
+      window.location.href = url.toString()
+    }
+  }
+
 
   destroyMap() {
     if (this.map) {
       this.map.off()
       this.map.remove()
       this.map = null
+    }
+  }
+
+  latValueChanged() { this.updateMapPosition() }
+  lonValueChanged() { this.updateMapPosition() }
+  tempValueChanged() { this.updateMapPosition() }
+  nameValueChanged() { this.updateMapPosition() }
+  descValueChanged() { this.updateMapPosition() }
+  timeValueChanged() { this.updateMapPosition() }
+
+  getPopupContent(lat, lon) {
+    return `
+      <div class="p-2 text-slate-900 font-sans">
+        <h4 class="font-bold text-sm leading-tight">${this.nameValue}</h4>
+        ${this.hasTimeValue ? `<p class="text-[10px] font-semibold text-slate-500 mt-0.5">${this.timeValue}</p>` : ''}
+        <div class="flex items-center gap-1.5 mt-1.5">
+          <span class="text-lg font-extrabold text-slate-800">${this.tempValue}°C</span>
+          <span class="text-xs font-semibold px-1.5 py-0.5 rounded bg-cyan-100 text-cyan-800">${this.descValue}</span>
+        </div>
+        <p class="text-[10px] text-slate-400 mt-1">Coordinates: ${lat.toFixed(4)}, ${lon.toFixed(4)}</p>
+      </div>
+    `
+  }
+
+  updateMapPosition() {
+    if (this.map && this.marker) {
+      const lat = this.latValue
+      const lon = this.lonValue
+
+      // Smooth pan map to new coordinates
+      this.map.panTo([lat, lon])
+      this.marker.setLatLng([lat, lon])
+
+      const popupContent = this.getPopupContent(lat, lon)
+      this.marker.setPopupContent(popupContent)
+
+      const markerElement = this.marker.getElement()
+      if (markerElement) {
+        const tempSpan = markerElement.querySelector('span.relative')
+        if (tempSpan) {
+          tempSpan.textContent = `${Math.round(parseFloat(this.tempValue))}°`
+        }
+      }
     }
   }
 }

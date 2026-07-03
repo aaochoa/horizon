@@ -10,22 +10,31 @@
 
   <!-- Horizontal scrolling list of hourly data -->
   <div class="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-800 scrollbar-track-transparent">
-    <% 12.times do |i| %>
-      <% time = Time.parse(hourly["time"][i]) %>
-      <% temp = hourly["temperature_2m"][i].round %>
-      <% prob = hourly["precipitation_probability"][i] %>
-      <% h_info = WeatherService.weather_info(hourly["weather_code"][i]) %>
+    <%
+      location_zone = @weather["timezone"] ? Time.find_zone(@weather["timezone"]) : nil
+      location_zone ||= Time.zone
+      current_hour_start = @local_time.beginning_of_hour
+      start_idx = hourly["time"].index { |t| location_zone.parse(t) >= current_hour_start } || 0
+    %>
+    <% 12.times do |offset| %>
+      <% idx = start_idx + offset %>
+      <% next if idx >= hourly["time"].size %>
+      <% time = location_zone.parse(hourly["time"][idx]) %>
+      <% temp = hourly["temperature_2m"][idx].round %>
+      <% prob = hourly["precipitation_probability"][idx] %>
+      <% h_info = WeatherService.weather_info(hourly["weather_code"][idx]) %>
+      <% is_current = (idx == start_idx) %>
       
-      <div class="flex-shrink-0 w-20 p-3 rounded-2xl bg-slate-100/40 dark:bg-slate-950/40 border border-slate-200/60 dark:border-slate-850 hover:border-slate-350 dark:hover:border-slate-800 text-center space-y-3 transition">
-        <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">
-          <%= time.strftime("%H:%M") %>
+      <div class="<%= is_current ? 'flex-shrink-0 w-20 p-3 rounded-2xl bg-cyan-50/20 dark:bg-cyan-950/30 border border-cyan-500/70 dark:border-cyan-400/70 shadow-md text-center space-y-3 transition ring-1 ring-cyan-500/20' : 'flex-shrink-0 w-20 p-3 rounded-2xl bg-slate-100/40 dark:bg-slate-950/40 border border-slate-200/60 dark:border-slate-850 hover:border-slate-350 dark:hover:border-slate-800 text-center space-y-3 transition' %>">
+        <span class="text-xs <%= is_current ? 'font-extrabold text-cyan-600 dark:text-cyan-400' : 'font-semibold text-slate-500 dark:text-slate-400' %>">
+          <%= is_current ? "Now" : time.strftime("%H:%M") %>
         </span>
         <div class="flex justify-center">
-          <i data-lucide="<%= h_info[:icon] %>" class="w-8 h-8 text-cyan-600 dark:text-cyan-400 stroke-[1.5]"></i>
+          <i data-lucide="<%= h_info[:icon] %>" class="w-8 h-8 <%= is_current ? 'text-cyan-500 dark:text-cyan-400' : 'text-cyan-600 dark:text-cyan-400' %> stroke-[1.5]"></i>
         </div>
-        <div class="text-sm font-bold text-slate-900 dark:text-white"><%= temp %>°</div>
+        <div class="text-sm font-bold <%= is_current ? 'text-cyan-700 dark:text-cyan-300 font-extrabold' : 'text-slate-900 dark:text-white' %>"><%= temp %>°</div>
         
-        <% if prob > 10 %>
+        <% if prob && prob > 0 %>
           <div class="flex items-center justify-center gap-0.5 text-[10px] font-bold text-cyan-600 dark:text-cyan-400">
             <i data-lucide="droplets" class="w-2.5 h-2.5"></i>
             <span><%= prob %>%</span>
