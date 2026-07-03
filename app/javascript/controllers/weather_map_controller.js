@@ -33,7 +33,8 @@ export default class extends Controller {
       this.tileLayer = L.tileLayer(tileUrl, {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
         subdomains: "abcd",
-        maxZoom: 20
+        maxZoom: 20,
+        className: "map-tiles"
       }).addTo(this.map)
     }
   }
@@ -64,7 +65,8 @@ export default class extends Controller {
     this.tileLayer = L.tileLayer(tileUrl, {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       subdomains: 'abcd',
-      maxZoom: 20
+      maxZoom: 20,
+      className: "map-tiles"
     }).addTo(this.map)
 
     // Custom CSS-styled marker for Leaflet
