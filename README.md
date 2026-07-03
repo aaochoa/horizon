@@ -1,3 +1,13 @@
+---
+title: Horizon Weather
+emoji: 🌤️
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Horizon Weather
 
 Horizon Weather is a modern, high-performance, glassmorphic Ruby on Rails 8 weather application. It provides real-time weather forecasts, interactive mapping, auto-complete search functionality, and personalized favorite locations, all powered by standard Rails Hotwire and Tailwind CSS v4.
