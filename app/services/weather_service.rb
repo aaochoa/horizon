@@ -187,7 +187,11 @@ class WeatherService
       url = "https://api.open-meteo.com/v1/forecast?latitude=#{lat}&longitude=#{lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,sunrise,sunset&timezone=auto"
 
       uri = URI(url)
-      response = Net::HTTP.get_response(uri)
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = (uri.scheme == "https")
+      http.open_timeout = 2
+      http.read_timeout = 2
+      response = http.get(uri.request_uri)
 
       if response.is_a?(Net::HTTPSuccess)
         JSON.parse(response.body)
@@ -202,7 +206,11 @@ class WeatherService
       url = "https://geocoding-api.open-meteo.com/v1/search?name=#{escaped_query}&count=8&language=en&format=json"
 
       uri = URI(url)
-      response = Net::HTTP.get_response(uri)
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = (uri.scheme == "https")
+      http.open_timeout = 2
+      http.read_timeout = 2
+      response = http.get(uri.request_uri)
 
       if response.is_a?(Net::HTTPSuccess)
         data = JSON.parse(response.body)
@@ -229,7 +237,7 @@ class WeatherService
       req = Net::HTTP::Get.new(uri)
       req["User-Agent"] = "HorizonWeather/1.0 (contact: aaochoa@horizon.com)"
 
-      response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https") do |http|
+      response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https", open_timeout: 2, read_timeout: 2) do |http|
         http.request(req)
       end
 
