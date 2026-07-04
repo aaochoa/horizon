@@ -26,7 +26,7 @@
       <% is_current = (idx == start_idx) %>
       
       <div class="<%= is_current ? 'flex-shrink-0 w-20 p-3 rounded-2xl bg-cyan-50/20 dark:bg-cyan-950/30 border border-cyan-500/70 dark:border-cyan-400/70 shadow-md text-center space-y-3 transition ring-1 ring-cyan-500/20' : 'flex-shrink-0 w-20 p-3 rounded-2xl bg-slate-100/40 dark:bg-slate-950/40 border border-slate-200/60 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-800 text-center space-y-3 transition' %>">
-        <span class="text-xs <%= is_current ? 'font-extrabold text-cyan-600 dark:text-cyan-400' : 'font-semibold text-slate-500 dark:text-slate-400' %>">
+        <span class="text-sm <%= is_current ? 'font-extrabold text-cyan-600 dark:text-cyan-400' : 'font-semibold text-slate-500 dark:text-slate-400' %>">
           <%= is_current ? "Now" : time.strftime("%H:%M") %>
         </span>
         <div class="flex justify-center">
