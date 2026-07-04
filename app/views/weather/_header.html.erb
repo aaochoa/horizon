@@ -28,9 +28,14 @@
     </div>
     
     <% if @local_time %>
-      <div class="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 select-none">
-        <i data-lucide="clock" class="w-4 h-4 text-cyan-600 dark:text-cyan-400 animate-pulse"></i>
-        <span>Local Time: <strong class="text-slate-900 dark:text-white font-bold"><%= @local_time.strftime("%A, %b %-d, %I:%M %p") %></strong> (<%= @weather["timezone_abbreviation"] %>)</span>
+      <div class="flex items-center flex-wrap gap-x-2 gap-y-1 select-none">
+        <div class="flex items-center gap-1 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          <i data-lucide="clock" class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 animate-pulse shrink-0"></i>
+          <span>Local Time:</span>
+        </div>
+        <span class="text-xs text-slate-500 dark:text-slate-400"><%= @local_time.strftime("%A, %b %-d,") %></span>
+        <strong class="text-xl font-extrabold text-slate-900 dark:text-white leading-none tracking-tight"><%= @local_time.strftime("%I:%M %p") %></strong>
+        <span class="text-[10px] font-bold text-cyan-600 dark:text-cyan-500/80 uppercase"><%= @weather["timezone_abbreviation"] %></span>
       </div>
     <% end %>
   </div>
