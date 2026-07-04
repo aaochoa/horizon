@@ -37,20 +37,20 @@
   </div>
 
   <!-- Astro times (Sunrise/Sunset & Moonrise/Moonset) -->
-  <div class="grid grid-cols-2 gap-4 text-xs mb-6 p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-800/40">
+  <div class="grid grid-cols-2 gap-4 text-sm mb-6 p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-800/40">
     <div class="space-y-3">
       <div class="flex items-center gap-2 text-slate-600 dark:text-slate-300">
         <i data-lucide="sunrise" class="w-4 h-4 text-amber-500"></i>
         <div class="flex flex-col">
-          <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wide">Sunrise</span>
-          <strong class="text-slate-800 dark:text-slate-200"><%= format_time.call(daily["sunrise"]&.first) %></strong>
+          <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Sunrise</span>
+          <strong class="text-sm font-bold text-slate-900 dark:text-white mt-0.5"><%= format_time.call(daily["sunrise"]&.first) %></strong>
         </div>
       </div>
       <div class="flex items-center gap-2 text-slate-600 dark:text-slate-300">
         <i data-lucide="sunset" class="w-4 h-4 text-orange-500"></i>
         <div class="flex flex-col">
-          <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wide">Sunset</span>
-          <strong class="text-slate-800 dark:text-slate-200"><%= format_time.call(daily["sunset"]&.first) %></strong>
+          <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Sunset</span>
+          <strong class="text-sm font-bold text-slate-900 dark:text-white mt-0.5"><%= format_time.call(daily["sunset"]&.first) %></strong>
         </div>
       </div>
     </div>
@@ -59,15 +59,15 @@
       <div class="flex items-center gap-2 text-slate-600 dark:text-slate-300">
         <i data-lucide="moon" class="w-4 h-4 text-indigo-400"></i>
         <div class="flex flex-col">
-          <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wide">Moonrise</span>
-          <strong class="text-slate-800 dark:text-slate-200"><%= format_time.call(daily["moonrise"]&.first) %></strong>
+          <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Moonrise</span>
+          <strong class="text-sm font-bold text-slate-900 dark:text-white mt-0.5"><%= format_time.call(daily["moonrise"]&.first) %></strong>
         </div>
       </div>
       <div class="flex items-center gap-2 text-slate-600 dark:text-slate-300">
         <i data-lucide="moon" class="w-4 h-4 text-purple-400 opacity-60"></i>
         <div class="flex flex-col">
-          <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wide">Moonset</span>
-          <strong class="text-slate-800 dark:text-slate-200"><%= format_time.call(daily["moonset"]&.first) %></strong>
+          <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Moonset</span>
+          <strong class="text-sm font-bold text-slate-900 dark:text-white mt-0.5"><%= format_time.call(daily["moonset"]&.first) %></strong>
         </div>
       </div>
     </div>

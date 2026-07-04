@@ -5,6 +5,25 @@ export default class extends Controller {
 
   connect() {
     this.applyTheme()
+    this.setupSystemThemeListener()
+  }
+
+  disconnect() {
+    if (this.mediaQuery && this.systemThemeListener) {
+      this.mediaQuery.removeEventListener("change", this.systemThemeListener)
+    }
+  }
+
+  setupSystemThemeListener() {
+    this.mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
+    this.systemThemeListener = (e) => {
+      if (!localStorage.getItem("theme")) {
+        this.applyTheme()
+        const event = new CustomEvent("theme-changed", { detail: { theme: e.matches ? "dark" : "light" } })
+        document.dispatchEvent(event)
+      }
+    }
+    this.mediaQuery.addEventListener("change", this.systemThemeListener)
   }
 
   toggle() {
