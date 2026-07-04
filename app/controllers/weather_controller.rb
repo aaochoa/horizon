@@ -42,7 +42,7 @@ class WeatherController < ApplicationController
 
     respond_to do |format|
       format.html
-      format.turbo_stream
+      format.turbo_stream { render :index, formats: :html, content_type: "text/html" }
     end
   end
 

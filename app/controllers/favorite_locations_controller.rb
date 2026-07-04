@@ -11,7 +11,7 @@ class FavoriteLocationsController < ApplicationController
       flash[:alert] = @favorite.errors.full_messages.to_sentence
     end
 
-    redirect_to root_path(lat: @favorite.latitude, lon: @favorite.longitude, name: @favorite.name)
+    redirect_to root_path(lat: @favorite.latitude, lon: @favorite.longitude, name: @favorite.name), status: :see_other
   end
 
   def destroy
@@ -20,7 +20,7 @@ class FavoriteLocationsController < ApplicationController
     @favorite.destroy
 
     flash[:notice] = "#{name} removed from favorites."
-    redirect_to root_path(lat: params[:lat], lon: params[:lon], name: params[:name])
+    redirect_to root_path(lat: params[:lat], lon: params[:lon], name: params[:name]), status: :see_other
   end
 
   private
