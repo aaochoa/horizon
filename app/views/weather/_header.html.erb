@@ -55,6 +55,6 @@
       <span>Auto-updating forecast</span>
     <% end %>
     <span class="text-slate-300 dark:text-slate-700">|</span>
-    <span>Updated <span data-controller="local-time" data-local-time-utc-value="<%= Time.current.iso8601 %>" class="font-semibold"><%= Time.current.strftime("%H:%M:%S") %></span></span>
+    <span>Updated <span data-controller="local-time" data-local-time-utc-value="<%= Time.current.iso8601 %>" class="font-semibold"><%= Time.current.strftime("%I:%M:%S %p") %></span></span>
   </div>
 </div>
