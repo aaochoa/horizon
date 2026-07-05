@@ -55,35 +55,35 @@ class WeatherService
       # WMO Weather interpretation codes (WMOCodes)
       case code
       when 0
-        { description: "Clear Sky", icon: "sun" }
+        { description: "Clear Sky", icon: "sun", gif_query: "sunny clear sky weather" }
       when 1
-        { description: "Mainly Clear", icon: "cloud-sun" }
+        { description: "Mainly Clear", icon: "cloud-sun", gif_query: "mostly sunny weather" }
       when 2
-        { description: "Partly Cloudy", icon: "cloud" }
+        { description: "Partly Cloudy", icon: "cloud", gif_query: "partly cloudy sky" }
       when 3
-        { description: "Overcast", icon: "cloudy" }
+        { description: "Overcast", icon: "cloudy", gif_query: "overcast cloudy sky" }
       when 45, 48
-        { description: "Foggy", icon: "cloud-fog" }
+        { description: "Foggy", icon: "cloud-fog", gif_query: "foggy misty weather" }
       when 51, 53, 55
-        { description: "Drizzle", icon: "cloud-drizzle" }
+        { description: "Drizzle", icon: "cloud-drizzle", gif_query: "light drizzle rain" }
       when 56, 57
-        { description: "Freezing Drizzle", icon: "cloud-snow" }
+        { description: "Freezing Drizzle", icon: "cloud-snow", gif_query: "freezing rain sleet" }
       when 61, 63, 65
-        { description: "Rainy", icon: "cloud-rain" }
+        { description: "Rainy", icon: "cloud-rain", gif_query: "heavy rain storm" }
       when 66, 67
-        { description: "Freezing Rain", icon: "cloud-snow" }
+        { description: "Freezing Rain", icon: "cloud-snow", gif_query: "freezing rain ice storm" }
       when 71, 73, 75
-        { description: "Snowy", icon: "cloud-snow" }
+        { description: "Snowy", icon: "cloud-snow", gif_query: "heavy snowfall blizzard" }
       when 77
-        { description: "Snow Grains", icon: "cloud-snow" }
+        { description: "Snow Grains", icon: "cloud-snow", gif_query: "snow flurries winter" }
       when 80, 81, 82
-        { description: "Rain Showers", icon: "cloud-rain" }
+        { description: "Rain Showers", icon: "cloud-rain", gif_query: "rain shower weather" }
       when 85, 86
-        { description: "Snow Showers", icon: "cloud-snow" }
+        { description: "Snow Showers", icon: "cloud-snow", gif_query: "snow shower winter storm" }
       when 95, 96, 99
-        { description: "Thunderstorm", icon: "cloud-lightning" }
+        { description: "Thunderstorm", icon: "cloud-lightning", gif_query: "thunderstorm lightning storm" }
       else
-        { description: "Unknown", icon: "help-circle" }
+        { description: "Unknown", icon: "help-circle", gif_query: "weather sky" }
       end
     end
 

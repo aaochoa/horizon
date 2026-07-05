@@ -5,14 +5,17 @@ class WeatherServiceTest < ActiveSupport::TestCase
     clear_sky = WeatherService.weather_info(0)
     assert_equal "Clear Sky", clear_sky[:description]
     assert_equal "sun", clear_sky[:icon]
+    assert_equal "sunny clear sky weather", clear_sky[:gif_query]
 
     thunderstorm = WeatherService.weather_info(95)
     assert_equal "Thunderstorm", thunderstorm[:description]
     assert_equal "cloud-lightning", thunderstorm[:icon]
+    assert_equal "thunderstorm lightning storm", thunderstorm[:gif_query]
 
     unknown = WeatherService.weather_info(999)
     assert_equal "Unknown", unknown[:description]
     assert_equal "help-circle", unknown[:icon]
+    assert_equal "weather sky", unknown[:gif_query]
   end
 
   test "get_weather fetches and returns weather data" do
