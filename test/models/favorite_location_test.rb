@@ -21,7 +21,7 @@ class FavoriteLocationTest < ActiveSupport::TestCase
   test "should validate latitude range" do
     fav_low = @user.favorite_locations.new(name: "Low", latitude: -91, longitude: 0)
     assert_not fav_low.valid?
-    
+
     fav_high = @user.favorite_locations.new(name: "High", latitude: 91, longitude: 0)
     assert_not fav_high.valid?
   end
@@ -29,14 +29,14 @@ class FavoriteLocationTest < ActiveSupport::TestCase
   test "should validate longitude range" do
     fav_low = @user.favorite_locations.new(name: "Low", latitude: 0, longitude: -181)
     assert_not fav_low.valid?
-    
+
     fav_high = @user.favorite_locations.new(name: "High", latitude: 0, longitude: 181)
     assert_not fav_high.valid?
   end
 
   test "should validate uniqueness scoped to user_id" do
     @user.favorite_locations.create!(name: "Chicago", latitude: 41.8781, longitude: -87.6298)
-    
+
     duplicate = @user.favorite_locations.new(name: "Chicago Duplicate", latitude: 41.8781, longitude: -87.6298)
     assert_not duplicate.valid?
     assert_includes duplicate.errors[:latitude], "has already been favorited"

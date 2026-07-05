@@ -57,17 +57,14 @@ export default class extends Controller {
   }
 
   updateIcons(theme) {
-    const lightIcon = this.element.querySelector('[data-theme-target="lightIcon"]')
-    const darkIcon = this.element.querySelector('[data-theme-target="darkIcon"]')
-
     if (theme === "dark") {
       // In dark theme, we want to show the Sun icon (to switch to light)
-      if (lightIcon) lightIcon.classList.remove("hidden")
-      if (darkIcon) darkIcon.classList.add("hidden")
+      if (this.hasLightIconTarget) this.lightIconTarget.classList.remove("hidden")
+      if (this.hasDarkIconTarget) this.darkIconTarget.classList.add("hidden")
     } else {
       // In light theme, we want to show the Moon icon (to switch to dark)
-      if (lightIcon) lightIcon.classList.add("hidden")
-      if (darkIcon) darkIcon.classList.remove("hidden")
+      if (this.hasLightIconTarget) this.lightIconTarget.classList.add("hidden")
+      if (this.hasDarkIconTarget) this.darkIconTarget.classList.remove("hidden")
     }
   }
 }

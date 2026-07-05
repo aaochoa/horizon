@@ -20,6 +20,7 @@ export default class extends Controller {
 
   disconnect() {
     this.destroyMap()
+    if (this.updateTimeout) clearTimeout(this.updateTimeout)
     document.removeEventListener("theme-changed", this.themeChangedListener)
   }
 
@@ -160,24 +161,27 @@ export default class extends Controller {
 
   updateMapPosition() {
     if (this.map && this.marker) {
-      const lat = this.latValue
-      const lon = this.lonValue
+      if (this.updateTimeout) clearTimeout(this.updateTimeout)
+      this.updateTimeout = setTimeout(() => {
+        const lat = this.latValue
+        const lon = this.lonValue
 
-      // Smooth pan map to new coordinates
-      this.map.panTo([lat, lon])
-      this.marker.setLatLng([lat, lon])
+        // Smooth pan map to new coordinates
+        this.map.panTo([lat, lon])
+        this.marker.setLatLng([lat, lon])
 
-      const popupContent = this.getPopupContent(lat, lon)
-      this.marker.setPopupContent(popupContent)
-      if (typeof lucide !== 'undefined') lucide.createIcons()
+        const popupContent = this.getPopupContent(lat, lon)
+        this.marker.setPopupContent(popupContent)
+        if (typeof lucide !== 'undefined') lucide.createIcons()
 
-      const markerElement = this.marker.getElement()
-      if (markerElement) {
-        const tempSpan = markerElement.querySelector('span.relative')
-        if (tempSpan) {
-          tempSpan.textContent = `${Math.round(parseFloat(this.tempValue))}°`
+        const markerElement = this.marker.getElement()
+        if (markerElement) {
+          const tempSpan = markerElement.querySelector('span.relative')
+          if (tempSpan) {
+            tempSpan.textContent = `${Math.round(parseFloat(this.tempValue))}°`
+          }
         }
-      }
+      }, 50)
     }
   }
 }

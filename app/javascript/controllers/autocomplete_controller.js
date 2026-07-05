@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["input", "results", "latitude", "longitude", "cityName", "form"]
+  static targets = ["input", "results"]
 
   connect() {
     this.searchTimeout = null
@@ -54,7 +54,6 @@ export default class extends Controller {
     }
 
     const html = cities.map(city => {
-      const name = city.name.replace(/'/g, "\\'")
       return `
         <button type="button" 
                 class="w-full text-left px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm text-slate-700 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 last:border-0 transition flex flex-col justify-start cursor-pointer"

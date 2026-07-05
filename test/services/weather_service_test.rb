@@ -25,7 +25,7 @@ class WeatherServiceTest < ActiveSupport::TestCase
         { "current" => { "temperature_2m" => 22.5 } }
       end
     end
-    
+
     begin
       result = WeatherService.get_weather(41.8781, -87.6298, force_refresh: true)
       assert_equal 22.5, result["current"]["temperature_2m"]
@@ -82,5 +82,75 @@ class WeatherServiceTest < ActiveSupport::TestCase
     assert_equal "Waxing Gibbous", gibbous[:name]
     assert_equal "🌔", gibbous[:emoji]
     assert_equal 80, gibbous[:illumination]
+  end
+
+  test "reverse_geocode returns formatted address on success" do
+    stub_weather_service(:fetch_city_from_coords, "Paris, Île-de-France, France") do
+      result = WeatherService.reverse_geocode(48.8566, 2.3522)
+      assert_equal "Paris, Île-de-France, France", result
+    end
+  end
+
+  test "reverse_geocode returns coordinate fallback on failure/timeout" do
+    # Clear cache first to ensure it hits the stubbed method
+    Rails.cache.delete("reverse_geocode_48.8566_2.3522")
+
+    err_proc = ->(lat, lon) { raise Net::OpenTimeout.new("timeout") }
+    stub_weather_service(:fetch_city_from_coords, err_proc) do
+      result = WeatherService.reverse_geocode(48.8566, 2.3522)
+      assert_equal "Coordinates: 48.8566, 2.3522", result
+    end
+  end
+
+  test "get_weather returns fallback data when API returns nil" do
+    stub_weather_service(:fetch_weather_from_api, nil) do
+      result = WeatherService.get_weather(41.8781, -87.6298, force_refresh: true)
+      assert result["is_fallback"]
+      assert_equal 21.5, result["current"]["temperature_2m"]
+    end
+  end
+
+  test "get_weather returns fallback data when API raises network exception" do
+    err_proc = ->(lat, lon) { raise Net::OpenTimeout.new("timeout") }
+    stub_weather_service(:fetch_weather_from_api, err_proc) do
+      result = WeatherService.get_weather(41.8781, -87.6298, force_refresh: true)
+      assert result["is_fallback"]
+      assert_equal 21.5, result["current"]["temperature_2m"]
+    end
+  end
+
+  test "search_cities returns fallback cities when API fails" do
+    stub_weather_service(:fetch_cities_from_api, ->(q) { [] }) do
+      results = WeatherService.search_cities("Chicago")
+      assert_equal 1, results.size
+      assert_equal "Chicago, Illinois, United States", results.first[:name]
+    end
+  end
+
+  test "get_weather force_refresh deletes cache key" do
+    cache_key = "weather_forecast_41.8781_-87.6298"
+    Rails.cache.write(cache_key, { "current" => { "temperature_2m" => 10.0 } })
+
+    mock_api = ->(lat, lon) { { "current" => { "temperature_2m" => 25.0 } } }
+    stub_weather_service(:fetch_weather_from_api, mock_api) do
+      result = WeatherService.get_weather(41.8781, -87.6298, force_refresh: true)
+      assert_equal 25.0, result["current"]["temperature_2m"]
+    end
+  end
+
+  private
+
+  def stub_weather_service(method_name, mock_val_or_proc)
+    mock_implementation = mock_val_or_proc.respond_to?(:call) ? mock_val_or_proc : ->(*args) { mock_val_or_proc }
+
+    metaclass = class << WeatherService; self; end
+    metaclass.alias_method :"original_#{method_name}", method_name
+    metaclass.define_method(method_name, &mock_implementation)
+
+    yield
+  ensure
+    metaclass = class << WeatherService; self; end
+    metaclass.alias_method method_name, :"original_#{method_name}"
+    metaclass.remove_method :"original_#{method_name}"
   end
 end
