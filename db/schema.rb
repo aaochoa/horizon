@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_01_223324) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_05_224213) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -22,6 +22,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_01_223324) do
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["user_id"], name: "index_favorite_locations_on_user_id"
+  end
+
+  create_table "geocode_caches", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "query_key", null: false
+    t.string "query_type", null: false
+    t.json "response_data", null: false
+    t.datetime "updated_at", null: false
+    t.index ["query_type", "query_key"], name: "index_geocode_caches_on_query_type_and_query_key", unique: true
   end
 
   create_table "sessions", force: :cascade do |t|

@@ -138,6 +138,134 @@ class WeatherServiceTest < ActiveSupport::TestCase
     end
   end
 
+  test "search_cities reads from database cache on Rails cache miss" do
+    memory_store = ActiveSupport::Cache.lookup_store(:memory_store)
+    original_cache = Rails.cache
+    begin
+      Rails.cache = memory_store
+      GeocodeCache.delete_all
+
+      GeocodeCache.create!(
+        query_type: "search",
+        query_key: "chicago",
+        response_data: [ { name: "Chicago, IL, Cached in DB" } ]
+      )
+
+      # API is mocked to raise error if called
+      mock_api = ->(q) { raise "API should not be called!" }
+      stub_weather_service(:fetch_cities_from_api, mock_api) do
+        results = WeatherService.search_cities("chicago")
+        assert_equal "Chicago, IL, Cached in DB", results.first["name"] || results.first[:name]
+      end
+
+      # Also verify it wrote it to Rails.cache
+      assert Rails.cache.read("city_search_chicago").present?
+    ensure
+      Rails.cache = original_cache
+    end
+  end
+
+  test "search_cities writes to database and Rails cache on API success" do
+    memory_store = ActiveSupport::Cache.lookup_store(:memory_store)
+    original_cache = Rails.cache
+    begin
+      Rails.cache = memory_store
+      GeocodeCache.delete_all
+
+      mock_results = [ { name: "Miami, FL, USA" } ]
+      stub_weather_service(:fetch_cities_from_api, mock_results) do
+        results = WeatherService.search_cities("miami")
+        assert_equal "Miami, FL, USA", results.first[:name]
+      end
+
+      # Verify DB entry
+      db_cache = GeocodeCache.find_by(query_type: "search", query_key: "miami")
+      assert_not_nil db_cache
+      assert_equal "Miami, FL, USA", db_cache.response_data.first["name"]
+
+      # Verify Rails.cache
+      assert Rails.cache.read("city_search_miami").present?
+    ensure
+      Rails.cache = original_cache
+    end
+  end
+
+  test "reverse_geocode reads from database cache on Rails cache miss" do
+    memory_store = ActiveSupport::Cache.lookup_store(:memory_store)
+    original_cache = Rails.cache
+    begin
+      Rails.cache = memory_store
+      GeocodeCache.delete_all
+
+      coord_key = "48.8566,2.3522"
+      GeocodeCache.create!(
+        query_type: "reverse",
+        query_key: coord_key,
+        response_data: "Paris, Cached in DB"
+      )
+
+      # API is mocked to raise error if called
+      mock_api = ->(lat, lon) { raise "API should not be called!" }
+      stub_weather_service(:fetch_city_from_coords, mock_api) do
+        result = WeatherService.reverse_geocode(48.8566, 2.3522)
+        assert_equal "Paris, Cached in DB", result
+      end
+
+      # Also verify it wrote to Rails cache
+      assert_equal "Paris, Cached in DB", Rails.cache.read("reverse_geocode_#{coord_key}")
+    ensure
+      Rails.cache = original_cache
+    end
+  end
+
+  test "reverse_geocode writes to database and Rails cache on API success" do
+    memory_store = ActiveSupport::Cache.lookup_store(:memory_store)
+    original_cache = Rails.cache
+    begin
+      Rails.cache = memory_store
+      GeocodeCache.delete_all
+
+      coord_key = "48.8566,2.3522"
+      stub_weather_service(:fetch_city_from_coords, "Paris, France") do
+        result = WeatherService.reverse_geocode(48.8566, 2.3522)
+        assert_equal "Paris, France", result
+      end
+
+      # Verify DB entry
+      db_cache = GeocodeCache.find_by(query_type: "reverse", query_key: coord_key)
+      assert_not_nil db_cache
+      assert_equal "Paris, France", db_cache.response_data
+
+      # Verify Rails cache
+      assert_equal "Paris, France", Rails.cache.read("reverse_geocode_#{coord_key}")
+    ensure
+      Rails.cache = original_cache
+    end
+  end
+
+  test "reverse_geocode does not write fallback coordinates to database cache on API failure" do
+    memory_store = ActiveSupport::Cache.lookup_store(:memory_store)
+    original_cache = Rails.cache
+    begin
+      Rails.cache = memory_store
+      GeocodeCache.delete_all
+
+      coord_key = "48.8566,2.3522"
+      stub_weather_service(:fetch_city_from_coords, "Coordinates: 48.8566, 2.3522") do
+        result = WeatherService.reverse_geocode(48.8566, 2.3522)
+        assert_equal "Coordinates: 48.8566, 2.3522", result
+      end
+
+      # Verify NO DB entry was created
+      assert_nil GeocodeCache.find_by(query_type: "reverse", query_key: coord_key)
+
+      # Verify it still cached the fallback in Rails cache (to avoid spamming external endpoints)
+      assert_equal "Coordinates: 48.8566, 2.3522", Rails.cache.read("reverse_geocode_#{coord_key}")
+    ensure
+      Rails.cache = original_cache
+    end
+  end
+
   private
 
   def stub_weather_service(method_name, mock_val_or_proc)
