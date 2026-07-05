@@ -17,7 +17,7 @@ Horizon Weather is a modern, high-performance, glassmorphic Ruby on Rails 8 weat
 ## 🌟 Key Features
 
 - **Keyless API Integration**: Retrieves weather forecasts and geocoding details using keyless endpoints from **Open-Meteo**, making setup instantaneous.
-- **Hotwire Architecture**: Utilizes **Turbo Drive, Turbo Frames, and Stimulus JS** for real-time partial page updates and smooth, SPA-like responsiveness. Scopes frame reloads strictly to the weather details, keeping the map and search bar active and untouched.
+- **Hotwire Architecture**: Utilizes **Turbo Drive, Turbo Frames, and Stimulus JS** for real-time partial page updates and smooth, SPA-like responsiveness. Scopes frame reloads strictly to the weather details, keeping the map and search bar active and untouched. Features seamless background refreshes using Turbo 8 morphing (`refresh="morph"`) on the main weather frame combined with Stimulus-based scroll container state preservation, keeping the sidebar details updated without visual flickering or losing scroll position.
 - **Resilient Service Layer**: Gracefully handles network timeouts (`Net::OpenTimeout`) and API failures by returning rich, structured mock fallback weather data to ensure the UI remains fully functional offline or during local development demos.
 - **Smart Caching**: Implements custom caching to minimize external API hits:
   - Weather forecasts cached for **15 minutes**.
@@ -28,10 +28,13 @@ Horizon Weather is a modern, high-performance, glassmorphic Ruby on Rails 8 weat
   - **Full-Screen Desktop Mode**: A Google Maps-style fullscreen layout with floating glassmorphic weather cards.
   - **Interactive Selection**: Click anywhere on the map to instantly select coordinates and reload the local weather.
   - **Map-Level Geolocation**: A floating crosshair "Locate Me" button to retrieve and load the user's current coordinates.
-- **Geocoding & Local Time**:
+- **Geocoding, Local Time & Lunar Data**:
   - Automatically reverse-geocodes coordinates into English location names (e.g. "Seoul, South Korea") using OpenStreetMap's **Nominatim API** (with a custom User-Agent).
   - Timezone-aware local time and date rendering in both the sidebar location header and the map marker popup tooltip.
   - Aligns the hourly forecast to start exactly from the city's current local hour and highlights the current hour card as **Now**.
+  - Dynamic astronomical calculations in the service layer to determine moon phases, illumination percentages, and moonrise/moonset times.
+- **Access & Smart Initial Location**: Automatically detects browser coordinates or falls back to last-saved coordinates in local storage (if the user is signed in) to load the personalized default weather dashboard instantly on first entry.
+- **A11y-Compliant Mobile Drawer**: Side menu transitions gracefully on smaller viewports and features robust keyboard navigation handling (closes on ESC, focuses on open, restores focus on close, and applies standard `inert` and `aria-hidden` attributes to hide from screen readers when collapsed).
 - **Dynamic Light/Dark Theme**: A fully custom theme toggler built with Tailwind CSS v4 custom variants (`@custom-variant dark`) and a persistent Stimulus controller.
 
 ---
@@ -84,6 +87,8 @@ Ensure you have the following installed on your local system:
 - [WeatherService](file:///Users/anderson/Documents/dev/horizon/app/services/weather_service.rb): Core service managing Open-Meteo connections, Nominatim reverse geocoding lookups, fallback demo generation, and rails caching policies.
 - [WeatherController](file:///Users/anderson/Documents/dev/horizon/app/controllers/weather_controller.rb): Manages the main forecast index view, coordinates checks, and routes autocomplete search results.
 - **Stimulus Controllers** ([app/javascript/controllers](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers)):
+  - [app_start_location_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/app_start_location_controller.js): Automatically detects user starting coordinates on first load or retrieves the last-saved location from local storage for logged-in accounts.
+  - [mobile_drawer_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/mobile_drawer_controller.js): Manages accessibility-compliant drawer panel overlays, backdrop clicks, escape-key closing, and focus traps for mobile layouts.
   - [theme_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/theme_controller.js): Handles light/dark mode toggling with dynamic icon updating.
   - [autocomplete_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/autocomplete_controller.js): Powers the search autocomplete dropdown for global cities.
   - [weather_map_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/weather_map_controller.js): Initializes the interactive Leaflet map and updates it in-place using Stimulus value change callbacks.
