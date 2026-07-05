@@ -7,7 +7,8 @@ export default class extends Controller {
     interval: { type: Number, default: 60000 }, // 60 seconds default
     temp: String,
     desc: String,
-    time: String
+    time: String,
+    icon: String
   }
 
   connect() {
@@ -77,12 +78,17 @@ export default class extends Controller {
     this.updateMap()
   }
 
+  iconValueChanged() {
+    this.updateMap()
+  }
+
   updateMap() {
     const mapElement = document.getElementById("weather_map_container")
     if (mapElement) {
       if (this.hasTempValue) mapElement.setAttribute("data-weather-map-temp-value", this.tempValue)
       if (this.hasDescValue) mapElement.setAttribute("data-weather-map-desc-value", this.descValue)
       if (this.hasTimeValue) mapElement.setAttribute("data-weather-map-time-value", this.timeValue)
+      if (this.hasIconValue) mapElement.setAttribute("data-weather-map-icon-value", this.iconValue)
     }
   }
 }

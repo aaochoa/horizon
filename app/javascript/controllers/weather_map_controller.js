@@ -8,7 +8,8 @@ export default class extends Controller {
     name: String,
     temp: String,
     desc: String,
-    time: String
+    time: String,
+    icon: String
   }
 
   connect() {
@@ -87,6 +88,11 @@ export default class extends Controller {
       popupAnchor: [0, -10]
     })
 
+    // Call lucide.createIcons on popup open
+    this.map.on("popupopen", () => {
+      if (typeof lucide !== 'undefined') lucide.createIcons()
+    })
+
     // Place Marker
     this.marker = L.marker([lat, lon], { icon: customIcon }).addTo(this.map)
 
@@ -135,6 +141,7 @@ export default class extends Controller {
   nameValueChanged() { this.updateMapPosition() }
   descValueChanged() { this.updateMapPosition() }
   timeValueChanged() { this.updateMapPosition() }
+  iconValueChanged() { this.updateMapPosition() }
 
   getPopupContent(lat, lon) {
     return `
@@ -142,6 +149,7 @@ export default class extends Controller {
         <h4 class="font-bold text-sm leading-tight">${this.nameValue}</h4>
         ${this.hasTimeValue ? `<p class="text-sm font-semibold text-slate-500 mt-0.5">${this.timeValue}</p>` : ''}
         <div class="flex items-center gap-1.5 mt-1.5">
+          ${this.hasIconValue ? `<i data-lucide="${this.iconValue}" class="w-4 h-4 text-cyan-600 shrink-0"></i>` : ''}
           <span class="text-lg font-extrabold text-slate-800">${this.tempValue}°C</span>
           <span class="text-xs font-semibold px-1.5 py-0.5 rounded bg-cyan-100 text-cyan-800">${this.descValue}</span>
         </div>
@@ -161,6 +169,7 @@ export default class extends Controller {
 
       const popupContent = this.getPopupContent(lat, lon)
       this.marker.setPopupContent(popupContent)
+      if (typeof lucide !== 'undefined') lucide.createIcons()
 
       const markerElement = this.marker.getElement()
       if (markerElement) {
