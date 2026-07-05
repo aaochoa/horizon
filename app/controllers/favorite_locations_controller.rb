@@ -11,7 +11,16 @@ class FavoriteLocationsController < ApplicationController
       flash[:alert] = @favorite.errors.full_messages.to_sentence
     end
 
-    redirect_to root_path(lat: @favorite.latitude, lon: @favorite.longitude, name: @favorite.name), status: :see_other
+    @latitude = params[:favorite_location]&.[](:latitude) || params[:lat]
+    @longitude = params[:favorite_location]&.[](:longitude) || params[:lon]
+    @location_name = params[:favorite_location]&.[](:name) || params[:name]
+    @favorites = Current.user.favorite_locations.order(:name)
+    @is_favorited = @favorites.any? { |f| (f.latitude - @latitude.to_f).abs < 0.001 && (f.longitude - @longitude.to_f).abs < 0.001 }
+
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to root_path(lat: @latitude, lon: @longitude, name: @location_name), status: :see_other }
+    end
   end
 
   def destroy
@@ -20,7 +29,17 @@ class FavoriteLocationsController < ApplicationController
     @favorite.destroy
 
     flash[:notice] = "#{name} removed from favorites."
-    redirect_to root_path(lat: params[:lat], lon: params[:lon], name: params[:name]), status: :see_other
+
+    @latitude = params[:lat]
+    @longitude = params[:lon]
+    @location_name = params[:name]
+    @favorites = Current.user.favorite_locations.order(:name)
+    @is_favorited = @favorites.any? { |f| (f.latitude - @latitude.to_f).abs < 0.001 && (f.longitude - @longitude.to_f).abs < 0.001 }
+
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to root_path(lat: @latitude, lon: @longitude, name: @location_name), status: :see_other }
+    end
   end
 
   private
