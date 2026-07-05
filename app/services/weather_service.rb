@@ -30,25 +30,75 @@ class WeatherService
     def search_cities(query)
       return [] if query.blank?
 
-      cache_key = "city_search_#{query.parameterize}"
-      data = Rails.cache.fetch(cache_key, expires_in: GEOCODE_CACHE_EXPIRATION) do
-        fetch_cities_from_api(query)
+      normalized_query = query.strip.downcase
+      cache_key = "city_search_#{normalized_query.parameterize}"
+
+      # 1. Try Rails Cache
+      data = Rails.cache.read(cache_key)
+      return data if data.present?
+
+      # 2. Try persistent database cache
+      db_record = GeocodeCache.find_by(query_type: "search", query_key: normalized_query)
+      if db_record
+        Rails.cache.write(cache_key, db_record.response_data, expires_in: GEOCODE_CACHE_EXPIRATION)
+        return db_record.response_data
       end
 
-      data.presence || fallback_cities(query)
+      # 3. Fetch from API
+      results = fetch_cities_from_api(query)
+      if results.present?
+        begin
+          GeocodeCache.find_or_create_by!(query_type: "search", query_key: normalized_query) do |c|
+            c.response_data = results
+          end
+        rescue ActiveRecord::RecordNotUnique
+          # Gracefully handle concurrent request race conditions
+        end
+        Rails.cache.write(cache_key, results, expires_in: GEOCODE_CACHE_EXPIRATION)
+        return results
+      end
+
+      fallback_cities(query)
     rescue => e
       Rails.logger.error "WeatherService geocoding error: #{e.message}"
       fallback_cities(query)
     end
 
     def reverse_geocode(lat, lon)
-      cache_key = "reverse_geocode_#{lat.to_f.round(4)}_#{lon.to_f.round(4)}"
-      Rails.cache.fetch(cache_key, expires_in: 30.days) do
-        fetch_city_from_coords(lat.to_f.round(4), lon.to_f.round(4))
+      rounded_lat = lat.to_f.round(4)
+      rounded_lon = lon.to_f.round(4)
+      coord_key = "#{rounded_lat},#{rounded_lon}"
+      cache_key = "reverse_geocode_#{coord_key}"
+
+      # 1. Try Rails Cache
+      data = Rails.cache.read(cache_key)
+      return data if data.present?
+
+      # 2. Try persistent database cache
+      db_record = GeocodeCache.find_by(query_type: "reverse", query_key: coord_key)
+      if db_record
+        Rails.cache.write(cache_key, db_record.response_data, expires_in: 30.days)
+        return db_record.response_data
       end
+
+      # 3. Fetch from API
+      name = fetch_city_from_coords(rounded_lat, rounded_lon)
+      if name.present? && !name.start_with?("Coordinates:")
+        begin
+          GeocodeCache.find_or_create_by!(query_type: "reverse", query_key: coord_key) do |c|
+            c.response_data = name
+          end
+        rescue ActiveRecord::RecordNotUnique
+          # Gracefully handle concurrent request race conditions
+        end
+      end
+
+      # Write to Rails cache (even if fallback string, to avoid spamming endpoint)
+      Rails.cache.write(cache_key, name, expires_in: 30.days)
+      name
     rescue => e
       Rails.logger.error "WeatherService reverse geocoding error: #{e.message}"
-      "Coordinates: #{lat.to_f.round(4)}, #{lon.to_f.round(4)}"
+      "Coordinates: #{rounded_lat}, #{rounded_lon}"
     end
 
     def weather_info(code)
