@@ -14,12 +14,15 @@ export default class extends Controller {
   connect() {
     this.startTimer()
     this.boundRestoreScroll = this.restoreScroll.bind(this)
+    this.boundSaveScroll = this.saveScroll.bind(this)
     this.element.addEventListener("turbo:frame-load", this.boundRestoreScroll)
+    this.element.addEventListener("turbo:submit-start", this.boundSaveScroll)
   }
 
   disconnect() {
     this.stopTimer()
     this.element.removeEventListener("turbo:frame-load", this.boundRestoreScroll)
+    this.element.removeEventListener("turbo:submit-start", this.boundSaveScroll)
   }
 
   startTimer() {
@@ -44,6 +47,7 @@ export default class extends Controller {
   restoreScroll() {
     if (this.hasScrollContainerTarget && this.savedScrollTop !== undefined) {
       this.scrollContainerTarget.scrollTop = this.savedScrollTop
+      this.savedScrollTop = undefined
     }
   }
 
