@@ -47,4 +47,39 @@ class FavoriteLocationsControllerTest < ActionDispatch::IntegrationTest
     assert_match /favorite_header_button/i, response.body
     assert_match /favorites/i, response.body
   end
+
+  test "should set flash alert on validation failure" do
+    @user.favorite_locations.create!(name: "Boston", latitude: 42.3601, longitude: -71.0589)
+
+    assert_no_difference("FavoriteLocation.count") do
+      post favorite_locations_path, params: {
+        favorite_location: { name: "Boston Duplicate", latitude: 42.3601, longitude: -71.0589 }
+      }
+    end
+    assert_redirected_to root_path(lat: 42.3601, lon: -71.0589, name: "Boston Duplicate")
+    assert_equal "Latitude has already been favorited", flash[:alert]
+  end
+
+  test "guest user should be redirected to login on create" do
+    # Disconnect the signed in user
+    delete session_path
+
+    assert_no_difference("FavoriteLocation.count") do
+      post favorite_locations_path, params: {
+        favorite_location: { name: "Seattle", latitude: 47.6062, longitude: -122.3321 }
+      }
+    end
+    assert_redirected_to new_session_path
+  end
+
+  test "guest user should be redirected to login on destroy" do
+    favorite = @user.favorite_locations.create!(name: "Boston", latitude: 42.3601, longitude: -71.0589)
+    # Disconnect the signed in user
+    delete session_path
+
+    assert_no_difference("FavoriteLocation.count") do
+      delete favorite_location_path(favorite, lat: 42.3601, lon: -71.0589, name: "Boston")
+    end
+    assert_redirected_to new_session_path
+  end
 end

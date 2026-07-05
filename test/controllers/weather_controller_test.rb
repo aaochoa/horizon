@@ -28,13 +28,13 @@ class WeatherControllerTest < ActionDispatch::IntegrationTest
         "temperature_2m_min" => Array.new(7) { 15 }
       }
     }
-    @@cities_mock = [{ "name" => "Boston, MA, USA", "latitude" => 42.3601, "longitude" => -71.0589 }]
+    @@cities_mock = [ { "name" => "Boston, MA, USA", "latitude" => 42.3601, "longitude" => -71.0589 } ]
 
     class << WeatherService
       alias_method :real_get_weather, :get_weather
       alias_method :real_search_cities, :search_cities
       alias_method :real_reverse_geocode, :reverse_geocode
-      
+
       def get_weather(lat, lon, force_refresh: false)
         @@weather_mock
       end
@@ -81,7 +81,7 @@ class WeatherControllerTest < ActionDispatch::IntegrationTest
     get search_cities_path, params: { q: "Boston" }
     assert_response :success
     assert_equal "application/json; charset=utf-8", response.content_type
-    
+
     json = JSON.parse(response.body)
     assert_equal 1, json.size
     assert_equal "Boston, MA, USA", json.first["name"]

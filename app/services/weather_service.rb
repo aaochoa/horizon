@@ -174,11 +174,10 @@ class WeatherService
       return [ nil, nil ] unless sunrise && sunset
 
       # Moonrise/moonset offset in hours based on phase
-      moonrise_offset = phase_val * 24.0
-      moonset_offset = phase_val * 24.0
+      moon_offset = phase_val * 24.0
 
-      moonrise = sunrise + moonrise_offset.hours
-      moonset = sunset + moonset_offset.hours
+      moonrise = sunrise + moon_offset.hours
+      moonset = sunset + moon_offset.hours
 
       [ moonrise.strftime("%Y-%m-%dT%H:%M"), moonset.strftime("%Y-%m-%dT%H:%M") ]
     end

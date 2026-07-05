@@ -7,8 +7,8 @@ class WeatherController < ApplicationController
     @longitude = params[:lon].presence || "-87.6298"
 
     @weather = WeatherService.get_weather(
-      @latitude.to_f.round(4), 
-      @longitude.to_f.round(4), 
+      @latitude.to_f.round(4),
+      @longitude.to_f.round(4),
       force_refresh: params[:refresh] == "true"
     )
 
@@ -30,7 +30,6 @@ class WeatherController < ApplicationController
     else
       @local_time = Time.current
     end
-    @local_time ||= Time.current
 
     if authenticated?
       @favorites = Current.user.favorite_locations.order(:name)

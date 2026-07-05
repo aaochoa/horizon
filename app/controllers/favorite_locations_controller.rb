@@ -11,9 +11,9 @@ class FavoriteLocationsController < ApplicationController
       flash[:alert] = @favorite.errors.full_messages.to_sentence
     end
 
-    @latitude = params[:favorite_location]&.[](:latitude) || params[:lat]
-    @longitude = params[:favorite_location]&.[](:longitude) || params[:lon]
-    @location_name = params[:favorite_location]&.[](:name) || params[:name]
+    @latitude = @favorite.latitude || params[:lat]
+    @longitude = @favorite.longitude || params[:lon]
+    @location_name = @favorite.name || params[:name]
     @favorites = Current.user.favorite_locations.order(:name)
     @is_favorited = @favorites.any? { |f| (f.latitude - @latitude.to_f).abs < 0.001 && (f.longitude - @longitude.to_f).abs < 0.001 }
 
