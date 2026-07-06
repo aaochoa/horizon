@@ -106,13 +106,15 @@ class WeatherService
       "Coordinates: #{rounded_lat}, #{rounded_lon}"
     end
 
-    def weather_info(code)
+    def weather_info(code, is_day = 1)
+      is_day_bool = (is_day.to_i == 1)
+
       # WMO Weather interpretation codes (WMOCodes)
       case code
       when 0
-        { description: "Clear Sky", icon: "sun", gif_query: "sunny clear sky weather" }
+        { description: "Clear Sky", icon: is_day_bool ? "sun" : "moon", gif_query: is_day_bool ? "sunny clear sky weather" : "clear night sky" }
       when 1
-        { description: "Mainly Clear", icon: "cloud-sun", gif_query: "mostly sunny weather" }
+        { description: "Mainly Clear", icon: is_day_bool ? "cloud-sun" : "cloud-moon", gif_query: is_day_bool ? "mostly sunny weather" : "clear night sky cloudy" }
       when 2
         { description: "Partly Cloudy", icon: "cloud", gif_query: "partly cloudy sky" }
       when 3
@@ -248,7 +250,7 @@ class WeatherService
     end
 
     def fetch_from_open_meteo(lat, lon, unit_system)
-      url = "https://api.open-meteo.com/v1/forecast?latitude=#{lat}&longitude=#{lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,sunrise,sunset&timezone=auto"
+      url = "https://api.open-meteo.com/v1/forecast?latitude=#{lat}&longitude=#{lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,sunrise,sunset&timezone=auto"
       if unit_system == "imperial"
         url += "&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch"
       end
@@ -325,6 +327,9 @@ class WeatherService
       hourly_temps = []
       hourly_precip_probs = []
       hourly_wmos = []
+      hourly_is_days = []
+
+      daily_data = body["daily"] || []
 
       hourly_data.each do |hour|
         hour_time = Time.at(hour["dt"]).in_time_zone(timezone) rescue Time.current
@@ -333,6 +338,17 @@ class WeatherService
         hourly_precip_probs << ((hour["pop"].to_f * 100).round rescue 0)
         hour_weather = hour["weather"]&.first || {}
         hourly_wmos << map_owm_id_to_wmo(hour_weather["id"])
+
+        # Calculate hourly is_day
+        hour_day = hour_time.beginning_of_day
+        daily_rec = daily_data.find { |d| Time.at(d["dt"]).in_time_zone(timezone).beginning_of_day == hour_day }
+        is_day_val = 1
+        if daily_rec
+          sunrise = daily_rec["sunrise"]
+          sunset = daily_rec["sunset"]
+          is_day_val = (hour["dt"] >= sunrise && hour["dt"] <= sunset) ? 1 : 0
+        end
+        hourly_is_days << is_day_val
       end
 
       daily_data = body["daily"] || []
@@ -391,7 +407,8 @@ class WeatherService
           "time" => hourly_times,
           "temperature_2m" => hourly_temps,
           "precipitation_probability" => hourly_precip_probs,
-          "weather_code" => hourly_wmos
+          "weather_code" => hourly_wmos,
+          "is_day" => hourly_is_days
         },
         "daily" => {
           "time" => daily_times,
@@ -514,7 +531,11 @@ class WeatherService
           "time" => Array.new(24) { |i| (Time.current + i.hours).strftime("%Y-%m-%dT%H:00") },
           "temperature_2m" => Array.new(24) { |i| temp_conv.call(21.5 + Math.sin(i / 3.0) * 3) },
           "precipitation_probability" => Array.new(24) { |i| [ 0, 10, 20, 30 ][i % 4] },
-          "weather_code" => Array.new(24) { 2 }
+          "weather_code" => Array.new(24) { 2 },
+          "is_day" => Array.new(24) { |i|
+            hr = (Time.current + i.hours).hour
+            (hr >= 6 && hr < 20) ? 1 : 0
+          }
         },
         "daily" => {
           "time" => Array.new(7) { |i| (Date.current + i.days).strftime("%Y-%m-%d") },

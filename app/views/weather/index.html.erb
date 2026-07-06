@@ -5,7 +5,7 @@
     <% current = @weather["current"] %>
     <% hourly = @weather["hourly"] %>
     <% daily = @weather["daily"] %>
-    <% current_info = WeatherService.weather_info(current["weather_code"]) %>
+    <% current_info = WeatherService.weather_info(current["weather_code"], current["is_day"]) %>
 
     <!-- Outer layout container:
          On all viewports: non-scrolling full-viewport layout containing absolutely positioned map. -->
