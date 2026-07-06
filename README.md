@@ -36,6 +36,9 @@ Horizon Weather is a modern, high-performance, glassmorphic Ruby on Rails 8 weat
 - **Access & Smart Initial Location**: Automatically detects browser coordinates or falls back to last-saved coordinates in local storage (if the user is signed in) to load the personalized default weather dashboard instantly on first entry.
 - **A11y-Compliant Mobile Drawer**: Side menu transitions gracefully on smaller viewports and features robust keyboard navigation handling (closes on ESC, focuses on open, restores focus on close, and applies standard `inert` and `aria-hidden` attributes to hide from screen readers when collapsed).
 - **Dynamic Light/Dark Theme**: A fully custom theme toggler built with Tailwind CSS v4 custom variants (`@custom-variant dark`) and a persistent Stimulus controller.
+- **Theme-Aware Leaflet Popups**: Automatically styles Leaflet map popup cards and tips with light/dark adaptive background and border overlays, ensuring high contrast and seamless design unity.
+- **Instant Client-Side Unit Toggling**: Switches Celsius/Fahrenheit, mph/km/h, and inches/mm on the fly without page or map reloads. Preferences are persisted silently to the session or database.
+- **Dismissible Sidebar Prompts**: Allows guest users to close prompt cards (like the "Save Your Favorites" banner) with persistent state retained in `localStorage`.
 
 ---
 
@@ -88,13 +91,15 @@ Ensure you have the following installed on your local system:
 - [WeatherController](file:///Users/anderson/Documents/dev/horizon/app/controllers/weather_controller.rb): Manages the main forecast index view, coordinates checks, and routes autocomplete search results.
 - **Stimulus Controllers** ([app/javascript/controllers](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers)):
   - [app_start_location_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/app_start_location_controller.js): Automatically detects user starting coordinates on first load or retrieves the last-saved location from local storage for logged-in accounts.
-  - [mobile_drawer_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/mobile_drawer_controller.js): Manages accessibility-compliant drawer panel overlays, backdrop clicks, escape-key closing, and focus traps for mobile layouts.
-  - [theme_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/theme_controller.js): Handles light/dark mode toggling with dynamic icon updating.
   - [autocomplete_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/autocomplete_controller.js): Powers the search autocomplete dropdown for global cities.
-  - [weather_map_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/weather_map_controller.js): Initializes the interactive Leaflet map and updates it in-place using Stimulus value change callbacks.
+  - [dismissible_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/dismissible_controller.js): Handles closing components (such as guest favorite prompts) and saving their closed state in localStorage.
   - [local_time_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/local_time_controller.js): Formats the "Updated" forecast timestamp in the user's browser local system time.
   - [map_locate_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/map_locate_controller.js): Manages the floating GPS button geolocating actions.
+  - [mobile_drawer_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/mobile_drawer_controller.js): Manages accessibility-compliant drawer panel overlays, backdrop clicks, escape-key closing, and focus traps for mobile layouts.
   - [refresh_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/refresh_controller.js): Triggers periodic checks for only the weather cards without reloading the map or search bar.
+  - [theme_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/theme_controller.js): Handles light/dark mode toggling with dynamic icon updating.
+  - [units_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/units_controller.js): Coordinates instant client-side unit system transitions (metric/imperial) without page reloads.
+  - [weather_map_controller.js](file:///Users/anderson/Documents/dev/horizon/app/javascript/controllers/weather_map_controller.js): Initializes the interactive Leaflet map and updates it in-place using Stimulus value change callbacks.
 
 ---
 
