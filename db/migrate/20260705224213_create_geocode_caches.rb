@@ -8,6 +8,6 @@ class CreateGeocodeCaches < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :geocode_caches, [:query_type, :query_key], unique: true
+    add_index :geocode_caches, [ :query_type, :query_key ], unique: true
   end
 end

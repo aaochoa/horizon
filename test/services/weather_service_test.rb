@@ -319,7 +319,7 @@ class WeatherServiceTest < ActiveSupport::TestCase
     assert_equal 41.8781, result["latitude"]
     assert_equal -87.6298, result["longitude"]
     assert_equal "America/Chicago", result["timezone"]
-    
+
     # Current
     assert_equal 20.5, result["current"]["temperature_2m"]
     assert_equal 19.8, result["current"]["apparent_temperature"]
