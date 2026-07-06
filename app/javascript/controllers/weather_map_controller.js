@@ -182,9 +182,7 @@ export default class extends Controller {
           <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-2.5">Coordinates: ${lat.toFixed(4)}, ${lon.toFixed(4)}</p>
         </div>
         ${this.hasIconValue ? `
-          <div class="flex-shrink-0 flex items-center justify-center p-3 rounded-2xl bg-gradient-to-br from-cyan-50 to-blue-50/50 dark:from-slate-800/80 dark:to-slate-900/40 border border-cyan-100/50 dark:border-slate-800 shadow-sm">
-            <i data-lucide="${this.iconValue}" class="w-12 h-12 text-cyan-600 dark:text-cyan-400 shrink-0"></i>
-          </div>
+          <i data-lucide="${this.iconValue}" class="w-16 h-16 text-cyan-500 dark:text-cyan-400 shrink-0 stroke-[1.2]"></i>
         ` : ''}
       </div>
     `
