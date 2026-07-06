@@ -70,11 +70,14 @@
           </div>
 
           <!-- Unit Toggle Button -->
-          <div class="flex items-center rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 p-0.5 text-[11px] font-bold">
-            <%= button_to unit_path, method: :patch, params: { unit_system: "imperial" }, form_class: "inline-flex", class: "px-2.5 py-1 rounded-lg transition-all cursor-pointer #{unit_system == 'imperial' ? 'bg-white dark:bg-slate-700 text-cyan-600 dark:text-cyan-400 shadow-sm font-extrabold' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}" do %>
+          <div data-controller="units"
+               data-units-current-value="<%= unit_system %>"
+               data-units-update-url-value="<%= unit_path %>"
+               class="flex items-center rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 p-0.5 text-[11px] font-bold">
+            <%= button_to unit_path, method: :patch, params: { unit_system: "imperial" }, form: { data: { action: "submit->units#toggle" } }, data: { units_target: "button", unit_system: "imperial" }, form_class: "inline-flex", class: "px-2.5 py-1 rounded-lg transition-all cursor-pointer #{unit_system == 'imperial' ? 'bg-white dark:bg-slate-700 text-cyan-600 dark:text-cyan-400 shadow-sm font-extrabold' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}" do %>
               °F
             <% end %>
-            <%= button_to unit_path, method: :patch, params: { unit_system: "metric" }, form_class: "inline-flex", class: "px-2.5 py-1 rounded-lg transition-all cursor-pointer #{unit_system == 'metric' ? 'bg-white dark:bg-slate-700 text-cyan-600 dark:text-cyan-400 shadow-sm font-extrabold' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}" do %>
+            <%= button_to unit_path, method: :patch, params: { unit_system: "metric" }, form: { data: { action: "submit->units#toggle" } }, data: { units_target: "button", unit_system: "metric" }, form_class: "inline-flex", class: "px-2.5 py-1 rounded-lg transition-all cursor-pointer #{unit_system == 'metric' ? 'bg-white dark:bg-slate-700 text-cyan-600 dark:text-cyan-400 shadow-sm font-extrabold' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}" do %>
               °C
             <% end %>
           </div>

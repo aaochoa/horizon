@@ -17,12 +17,16 @@ export default class extends Controller {
     this.initMap()
     this.themeChangedListener = this.onThemeChanged.bind(this)
     document.addEventListener("theme-changed", this.themeChangedListener)
+
+    this.unitsChangedListener = this.onUnitsChanged.bind(this)
+    document.addEventListener("units-changed", this.unitsChangedListener)
   }
 
   disconnect() {
     this.destroyMap()
     if (this.updateTimeout) clearTimeout(this.updateTimeout)
     document.removeEventListener("theme-changed", this.themeChangedListener)
+    document.removeEventListener("units-changed", this.unitsChangedListener)
   }
 
   onThemeChanged(event) {
@@ -39,6 +43,26 @@ export default class extends Controller {
         maxZoom: 20,
         className: "map-tiles"
       }).addTo(this.map)
+    }
+  }
+
+  onUnitsChanged(event) {
+    const { unitSymbol, temp } = event.detail
+    this.unitSymbolValue = unitSymbol
+    this.tempValue = temp
+
+    if (this.marker) {
+      const markerElement = this.marker.getElement()
+      if (markerElement) {
+        const tempSpan = markerElement.querySelector('span.relative')
+        if (tempSpan) {
+          tempSpan.textContent = `${Math.round(parseFloat(temp))}°`
+        }
+      }
+
+      const popupContent = this.getPopupContent(this.latValue, this.lonValue)
+      this.marker.setPopupContent(popupContent)
+      if (typeof lucide !== 'undefined') lucide.createIcons()
     }
   }
 

@@ -11,6 +11,10 @@ class UnitsController < ApplicationController
       end
     end
 
-    redirect_back_or_to root_path
+    respond_to do |format|
+      format.json { render json: { success: true } }
+      format.html { redirect_back_or_to root_path }
+      format.turbo_stream { redirect_back_or_to root_path }
+    end
   end
 end
