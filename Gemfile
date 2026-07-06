@@ -67,4 +67,3 @@ group :test do
   gem "selenium-webdriver"
   gem "webmock"
 end
-

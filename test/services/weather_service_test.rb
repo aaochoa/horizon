@@ -266,6 +266,82 @@ class WeatherServiceTest < ActiveSupport::TestCase
     end
   end
 
+  test "map_owm_id_to_wmo maps OpenWeatherMap conditions to WMO correctly" do
+    assert_equal 0, WeatherService.send(:map_owm_id_to_wmo, 800)
+    assert_equal 2, WeatherService.send(:map_owm_id_to_wmo, 802)
+    assert_equal 3, WeatherService.send(:map_owm_id_to_wmo, 804)
+    assert_equal 45, WeatherService.send(:map_owm_id_to_wmo, 741)
+    assert_equal 61, WeatherService.send(:map_owm_id_to_wmo, 500)
+    assert_equal 95, WeatherService.send(:map_owm_id_to_wmo, 211)
+  end
+
+  test "translate_owm_to_open_meteo correctly maps One Call 3.0 response format" do
+    now = Time.current.beginning_of_hour
+    owm_payload = {
+      "lat" => 41.8781,
+      "lon" => -87.6298,
+      "timezone" => "America/Chicago",
+      "current" => {
+        "temp" => 20.5,
+        "feels_like" => 19.8,
+        "humidity" => 60,
+        "wind_speed" => 5.0, # m/s -> should be converted to 18.0 km/h
+        "dt" => now.to_i,
+        "sunrise" => (now - 6.hours).to_i,
+        "sunset" => (now + 6.hours).to_i,
+        "weather" => [ { "id" => 800, "description" => "clear sky" } ]
+      },
+      "hourly" => [
+        {
+          "dt" => now.to_i,
+          "temp" => 20.5,
+          "pop" => 0.1,
+          "weather" => [ { "id" => 800 } ]
+        }
+      ],
+      "daily" => [
+        {
+          "dt" => now.to_i,
+          "temp" => { "max" => 25.0, "min" => 15.0 },
+          "rain" => 2.5,
+          "sunrise" => (now - 6.hours).to_i,
+          "sunset" => (now + 6.hours).to_i,
+          "moonrise" => (now + 8.hours).to_i,
+          "moonset" => (now - 4.hours).to_i,
+          "moon_phase" => 0.25,
+          "weather" => [ { "id" => 800 } ]
+        }
+      ]
+    }
+
+    result = WeatherService.send(:translate_owm_to_open_meteo, owm_payload)
+
+    assert_equal 41.8781, result["latitude"]
+    assert_equal -87.6298, result["longitude"]
+    assert_equal "America/Chicago", result["timezone"]
+
+    # Current
+    assert_equal 20.5, result["current"]["temperature_2m"]
+    assert_equal 19.8, result["current"]["apparent_temperature"]
+    assert_equal 60, result["current"]["relative_humidity_2m"]
+    assert_equal 18.0, result["current"]["wind_speed_10m"]
+    assert_equal 0, result["current"]["weather_code"]
+    assert_equal 1, result["current"]["is_day"]
+
+    # Hourly
+    assert_equal 1, result["hourly"]["time"].size
+    assert_equal 20.5, result["hourly"]["temperature_2m"].first
+    assert_equal 10, result["hourly"]["precipitation_probability"].first # 0.1 * 100
+    assert_equal 0, result["hourly"]["weather_code"].first
+
+    # Daily
+    assert_equal 1, result["daily"]["time"].size
+    assert_equal 25.0, result["daily"]["temperature_2m_max"].first
+    assert_equal 15.0, result["daily"]["temperature_2m_min"].first
+    assert_equal 2.5, result["daily"]["precipitation_sum"].first
+    assert_equal 0.25, result["daily"]["moon_phase"].first
+  end
+
   private
 
   def stub_weather_service(method_name, mock_val_or_proc)

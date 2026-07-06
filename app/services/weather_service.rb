@@ -233,6 +233,16 @@ class WeatherService
     end
 
     def fetch_weather_from_api(lat, lon)
+      api_key = ENV["OPENWEATHERMAP_API_KEY"] || Rails.application.credentials.openweathermap_api_key
+
+      if api_key.present?
+        fetch_from_openweathermap(lat, lon, api_key)
+      else
+        fetch_from_open_meteo(lat, lon)
+      end
+    end
+
+    def fetch_from_open_meteo(lat, lon)
       url = "https://api.open-meteo.com/v1/forecast?latitude=#{lat}&longitude=#{lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,sunrise,sunset&timezone=auto"
 
       uri = URI(url)
@@ -247,6 +257,149 @@ class WeatherService
       else
         Rails.logger.error "Open-Meteo API failure: #{response.code} #{response.message}"
         nil
+      end
+    end
+
+    def fetch_from_openweathermap(lat, lon, api_key)
+      url = "https://api.openweathermap.org/data/3.0/onecall?lat=#{lat}&lon=#{lon}&units=metric&appid=#{api_key}"
+
+      uri = URI(url)
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = (uri.scheme == "https")
+      http.open_timeout = 2
+      http.read_timeout = 2
+      response = http.get(uri.request_uri)
+
+      if response.is_a?(Net::HTTPSuccess)
+        body = JSON.parse(response.body)
+        translate_owm_to_open_meteo(body)
+      else
+        Rails.logger.error "OpenWeatherMap API failure: #{response.code} #{response.message}"
+        nil
+      end
+    rescue => e
+      Rails.logger.error "OpenWeatherMap fetch error: #{e.message}"
+      nil
+    end
+
+    def translate_owm_to_open_meteo(body)
+      return nil unless body.is_a?(Hash)
+
+      timezone = body["timezone"] || "UTC"
+      timezone_abbr = Time.current.in_time_zone(timezone).strftime("%Z") rescue "UTC"
+
+      current_data = body["current"] || {}
+      current_weather = current_data["weather"]&.first || {}
+      current_wmo = map_owm_id_to_wmo(current_weather["id"])
+
+      # Precipitation calculation (rain + snow 1h values)
+      current_precip = (current_data.dig("rain", "1h") || 0.0) + (current_data.dig("snow", "1h") || 0.0)
+
+      # OpenWeatherMap wind speed is in m/s. Convert to km/h by multiplying by 3.6.
+      wind_kmh = (current_data["wind_speed"].to_f * 3.6).round(1)
+
+      hourly_data = body["hourly"] || []
+      hourly_times = []
+      hourly_temps = []
+      hourly_precip_probs = []
+      hourly_wmos = []
+
+      hourly_data.each do |hour|
+        hour_time = Time.at(hour["dt"]).in_time_zone(timezone) rescue Time.current
+        hourly_times << hour_time.strftime("%Y-%m-%dT%H:%M")
+        hourly_temps << hour["temp"].to_f
+        hourly_precip_probs << ((hour["pop"].to_f * 100).round rescue 0)
+        hour_weather = hour["weather"]&.first || {}
+        hourly_wmos << map_owm_id_to_wmo(hour_weather["id"])
+      end
+
+      daily_data = body["daily"] || []
+      daily_times = []
+      daily_wmos = []
+      daily_temp_maxs = []
+      daily_temp_mins = []
+      daily_precip_sums = []
+      daily_sunrises = []
+      daily_sunsets = []
+      daily_moonrises = []
+      daily_moonsets = []
+      daily_moon_phases = []
+
+      daily_data.each do |day|
+        day_time = Time.at(day["dt"]).in_time_zone(timezone) rescue Time.current
+        daily_times << day_time.strftime("%Y-%m-%d")
+
+        day_weather = day["weather"]&.first || {}
+        daily_wmos << map_owm_id_to_wmo(day_weather["id"])
+
+        daily_temp_maxs << day.dig("temp", "max").to_f
+        daily_temp_mins << day.dig("temp", "min").to_f
+
+        day_precip = (day["rain"] || 0.0) + (day["snow"] || 0.0)
+        daily_precip_sums << day_precip.to_f
+
+        daily_sunrises << (Time.at(day["sunrise"]).in_time_zone(timezone).strftime("%Y-%m-%dT%H:%M") rescue nil)
+        daily_sunsets << (Time.at(day["sunset"]).in_time_zone(timezone).strftime("%Y-%m-%dT%H:%M") rescue nil)
+        daily_moonrises << (Time.at(day["moonrise"]).in_time_zone(timezone).strftime("%Y-%m-%dT%H:%M") rescue nil)
+        daily_moonsets << (Time.at(day["moonset"]).in_time_zone(timezone).strftime("%Y-%m-%dT%H:%M") rescue nil)
+        daily_moon_phases << day["moon_phase"].to_f
+      end
+
+      {
+        "latitude" => body["lat"],
+        "longitude" => body["lon"],
+        "timezone" => timezone,
+        "timezone_abbreviation" => timezone_abbr,
+        "current" => {
+          "temperature_2m" => current_data["temp"].to_f,
+          "relative_humidity_2m" => current_data["humidity"].to_i,
+          "apparent_temperature" => current_data["feels_like"].to_f,
+          "is_day" => (current_data["dt"] >= current_data["sunrise"] && current_data["dt"] <= current_data["sunset"] ? 1 : 0 rescue 1),
+          "precipitation" => current_precip,
+          "rain" => current_data.dig("rain", "1h") || 0.0,
+          "showers" => 0.0,
+          "snowfall" => current_data.dig("snow", "1h") || 0.0,
+          "weather_code" => current_wmo,
+          "wind_speed_10m" => wind_kmh
+        },
+        "hourly" => {
+          "time" => hourly_times,
+          "temperature_2m" => hourly_temps,
+          "precipitation_probability" => hourly_precip_probs,
+          "weather_code" => hourly_wmos
+        },
+        "daily" => {
+          "time" => daily_times,
+          "weather_code" => daily_wmos,
+          "temperature_2m_max" => daily_temp_maxs,
+          "temperature_2m_min" => daily_temp_mins,
+          "precipitation_sum" => daily_precip_sums,
+          "sunrise" => daily_sunrises,
+          "sunset" => daily_sunsets,
+          "moonrise" => daily_moonrises,
+          "moonset" => daily_moonsets,
+          "moon_phase" => daily_moon_phases
+        }
+      }
+    end
+
+    def map_owm_id_to_wmo(id)
+      id = id.to_i
+      case id
+      when 800 then 0 # Clear Sky
+      when 801 then 1 # Mainly Clear
+      when 802 then 2 # Partly Cloudy
+      when 803, 804 then 3 # Overcast
+      when 701, 741 then 45 # Foggy / Mist
+      when 300..321 then 51 # Drizzle
+      when 500, 501 then 61 # Light Rain
+      when 502, 503, 504 then 65 # Heavy Rain
+      when 511 then 66 # Freezing Rain
+      when 600..602 then 71 # Snow
+      when 611..622 then 85 # Snow showers
+      when 520..531 then 80 # Rain Showers
+      when 200..232 then 95 # Thunderstorm
+      else 2 # Partly Cloudy default
       end
     end
 
