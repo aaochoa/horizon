@@ -342,6 +342,19 @@ class WeatherServiceTest < ActiveSupport::TestCase
     assert_equal 0.25, result["daily"]["moon_phase"].first
   end
 
+  test "get_weather replaces GMT with UTC in timezone abbreviation" do
+    payload = {
+      "timezone" => "America/Bogota",
+      "timezone_abbreviation" => "GMT-5",
+      "current" => { "temperature_2m" => 20 }
+    }
+    
+    stub_weather_service(:fetch_weather_from_api, payload) do
+      result = WeatherService.get_weather(4.82, -75.7, force_refresh: true)
+      assert_equal "UTC-5", result["timezone_abbreviation"]
+    end
+  end
+
   private
 
   def stub_weather_service(method_name, mock_val_or_proc)
