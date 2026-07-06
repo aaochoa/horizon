@@ -82,7 +82,27 @@ export default class extends Controller {
         displayTemp = Math.round(metricTemp)
       }
 
-      const mapEvent = new CustomEvent("units-changed", { detail: { unit: unit, unitSymbol: unitSymbol, temp: displayTemp } })
+      const rawPrecip = parseFloat(mapEl.getAttribute("data-weather-map-precip-value"))
+      const metricPrecip = parseFloat(mapEl.getAttribute("data-metric-precip-value") || rawPrecip)
+      let displayPrecip = metricPrecip
+      let precipUnit = "mm"
+      if (unit === "imperial") {
+        displayPrecip = (metricPrecip / 25.4).toFixed(2)
+        precipUnit = "in"
+      } else {
+        displayPrecip = metricPrecip.toFixed(1)
+      }
+
+      mapEl.setAttribute("data-weather-map-precip-value", displayPrecip)
+      mapEl.setAttribute("data-weather-map-precip-unit-value", precipUnit)
+
+      const mapEvent = new CustomEvent("units-changed", { detail: { 
+        unit: unit, 
+        unitSymbol: unitSymbol, 
+        temp: displayTemp,
+        precip: displayPrecip,
+        precipUnit: precipUnit
+      } })
       document.dispatchEvent(mapEvent)
     }
 

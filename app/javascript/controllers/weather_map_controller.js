@@ -10,7 +10,9 @@ export default class extends Controller {
     desc: String,
     time: String,
     icon: String,
-    unitSymbol: { type: String, default: "°C" }
+    unitSymbol: { type: String, default: "°C" },
+    precip: String,
+    precipUnit: String
   }
 
   connect() {
@@ -47,9 +49,11 @@ export default class extends Controller {
   }
 
   onUnitsChanged(event) {
-    const { unitSymbol, temp } = event.detail
+    const { unitSymbol, temp, precip, precipUnit } = event.detail
     this.unitSymbolValue = unitSymbol
     this.tempValue = temp
+    if (precip !== undefined) this.precipValue = precip
+    if (precipUnit !== undefined) this.precipUnitValue = precipUnit
 
     if (this.marker) {
       const markerElement = this.marker.getElement()
@@ -168,8 +172,17 @@ export default class extends Controller {
   descValueChanged() { this.updateMapPosition() }
   timeValueChanged() { this.updateMapPosition() }
   iconValueChanged() { this.updateMapPosition() }
+  precipValueChanged() { this.updateMapPosition() }
+  precipUnitValueChanged() { this.updateMapPosition() }
 
   getPopupContent(lat, lon) {
+    const precipHtml = this.hasPrecipValue ? `
+      <div class="flex items-center gap-1.5 mt-2 text-xs text-slate-500 dark:text-slate-400">
+        <i data-lucide="cloud-rain" class="w-3.5 h-3.5 text-cyan-500 dark:text-cyan-400 shrink-0"></i>
+        <span>Precipitation: <strong class="text-slate-700 dark:text-slate-300">${this.precipValue} ${this.precipUnitValue}</strong></span>
+      </div>
+    ` : '';
+
     return `
       <div class="flex items-center justify-between gap-4 p-1 text-slate-900 dark:text-slate-100 font-sans min-w-[260px] max-w-[320px]">
         <div class="flex-grow text-left">
@@ -179,6 +192,7 @@ export default class extends Controller {
             <span class="text-2xl font-black text-slate-800 dark:text-slate-200">${this.tempValue}${this.unitSymbolValue}</span>
             <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20">${this.descValue}</span>
           </div>
+          ${precipHtml}
           <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-2.5">Coordinates: ${lat.toFixed(4)}, ${lon.toFixed(4)}</p>
         </div>
         ${this.hasIconValue ? `

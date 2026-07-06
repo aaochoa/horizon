@@ -13,6 +13,9 @@
        data-weather-map-icon-value="<%= current_info[:icon] %>"
        data-weather-map-unit-symbol-value="<%= unit_system == 'imperial' ? '°F' : '°C' %>"
        data-metric-temp-value="<%= metric_temp(current["temperature_2m"]) %>"
+       data-weather-map-precip-value="<%= current["precipitation"] %>"
+       data-weather-map-precip-unit-value="<%= unit_system == 'imperial' ? 'in' : 'mm' %>"
+       data-metric-precip-value="<%= metric_precip(current["precipitation"]) %>"
        class="w-full h-full z-0 relative">
     
     <!-- Map Canvas Target -->

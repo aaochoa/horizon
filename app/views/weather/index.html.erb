@@ -49,6 +49,9 @@
                    data-refresh-desc-value="<%= current_info[:description] %>"
                    data-refresh-time-value="<%= @local_time.strftime("%A, %b %-d, %I:%M %p") %><%= @weather["timezone_abbreviation"] ? " #{@weather["timezone_abbreviation"]}" : "" %>"
                    data-refresh-icon-value="<%= current_info[:icon] %>"
+                   data-refresh-precip-value="<%= current["precipitation"] %>"
+                   data-refresh-precip-unit-value="<%= unit_system == 'imperial' ? 'in' : 'mm' %>"
+                   data-refresh-metric-precip-value="<%= metric_precip(current["precipitation"]) %>"
                    data-mobile-drawer-target="drawer"
                    tabindex="-1"
                    class="outline-none fixed inset-y-0 left-0 z-40 w-[340px] max-w-[85vw] transform -translate-x-full transition-transform duration-300 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-2xl flex flex-col lg:absolute lg:top-0 lg:left-0 lg:bottom-0 lg:w-[410px] lg:max-w-none lg:z-10 lg:pointer-events-none lg:bg-transparent lg:dark:bg-transparent lg:backdrop-blur-none lg:shadow-none lg:translate-x-0 lg:flex lg:flex-col lg:p-6 lg:max-h-full lg:pt-[88px]">

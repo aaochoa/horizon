@@ -8,7 +8,10 @@ export default class extends Controller {
     temp: String,
     desc: String,
     time: String,
-    icon: String
+    icon: String,
+    precip: String,
+    precipUnit: String,
+    metricPrecip: String
   }
 
   connect() {
@@ -86,6 +89,18 @@ export default class extends Controller {
     this.updateMap()
   }
 
+  precipValueChanged() {
+    this.updateMap()
+  }
+
+  precipUnitValueChanged() {
+    this.updateMap()
+  }
+
+  metricPrecipValueChanged() {
+    this.updateMap()
+  }
+
   updateMap() {
     const mapElement = document.getElementById("weather_map_container")
     if (mapElement) {
@@ -93,6 +108,9 @@ export default class extends Controller {
       if (this.hasDescValue) mapElement.setAttribute("data-weather-map-desc-value", this.descValue)
       if (this.hasTimeValue) mapElement.setAttribute("data-weather-map-time-value", this.timeValue)
       if (this.hasIconValue) mapElement.setAttribute("data-weather-map-icon-value", this.iconValue)
+      if (this.hasPrecipValue) mapElement.setAttribute("data-weather-map-precip-value", this.precipValue)
+      if (this.hasPrecipUnitValue) mapElement.setAttribute("data-weather-map-precip-unit-value", this.precipUnitValue)
+      if (this.hasMetricPrecipValue) mapElement.setAttribute("data-metric-precip-value", this.metricPrecipValue)
     }
   }
 }
