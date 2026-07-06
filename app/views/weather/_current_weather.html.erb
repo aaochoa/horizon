@@ -8,11 +8,11 @@
     <div class="text-left">
       <p class="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">Current Weather</p>
       <h2 class="text-5xl font-black text-slate-900 dark:text-white mt-1.5">
-        <%= current["temperature_2m"].round %>°C
+        <%= format_temp(current["temperature_2m"]) %>
       </h2>
       <p class="text-lg font-bold text-cyan-600 dark:text-cyan-400 mt-1"><%= current_info[:description] %></p>
     </div>
-
+    
     <!-- Weather GIF / Icon slot -->
     <div class="flex-shrink-0 relative w-24 h-24"
          data-controller="weather-gif"
@@ -34,7 +34,7 @@
   <div class="grid grid-cols-2 gap-4 text-xs relative z-10 border-t border-slate-100 dark:border-slate-800/60 pt-4">
     <div class="flex items-center gap-2 text-slate-600 dark:text-slate-300">
       <i data-lucide="thermometer" class="w-4 h-4 text-cyan-500 dark:text-cyan-400 shrink-0"></i>
-      <span>Feels like <strong><%= current["apparent_temperature"].round %>°C</strong></span>
+      <span>Feels like <strong><%= format_temp(current["apparent_temperature"]) %></strong></span>
     </div>
     <div class="flex items-center gap-2 text-slate-600 dark:text-slate-300">
       <i data-lucide="droplets" class="w-4 h-4 text-cyan-500 dark:text-cyan-400 shrink-0"></i>
@@ -42,11 +42,11 @@
     </div>
     <div class="flex items-center gap-2 text-slate-600 dark:text-slate-300">
       <i data-lucide="wind" class="w-4 h-4 text-cyan-500 dark:text-cyan-400 shrink-0"></i>
-      <span>Wind <strong><%= current["wind_speed_10m"].round %> km/h</strong></span>
+      <span>Wind <strong><%= format_wind(current["wind_speed_10m"]) %></strong></span>
     </div>
     <div class="flex items-center gap-2 text-slate-600 dark:text-slate-300">
       <i data-lucide="cloud-rain" class="w-4 h-4 text-cyan-500 dark:text-cyan-400 shrink-0"></i>
-      <span>Precip. <strong><%= current["precipitation"] %> mm</strong></span>
+      <span>Precip. <strong><%= format_precip(current["precipitation"]) %></strong></span>
     </div>
   </div>
 </div>

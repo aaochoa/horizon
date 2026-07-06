@@ -6,15 +6,15 @@ class WeatherService
   GEOCODE_CACHE_EXPIRATION = 1.day
 
   class << self
-    def get_weather(lat, lon, force_refresh: false)
-      cache_key = "weather_forecast_#{lat}_#{lon}"
+    def get_weather(lat, lon, unit_system: "imperial", force_refresh: false)
+      cache_key = "weather_forecast_#{lat}_#{lon}_#{unit_system}"
 
       if force_refresh
         Rails.cache.delete(cache_key)
       end
 
       data = Rails.cache.fetch(cache_key, expires_in: CACHE_EXPIRATION) do
-        fetch_weather_from_api(lat, lon)
+        fetch_weather_from_api(lat, lon, unit_system)
       end
 
       if data
@@ -26,10 +26,10 @@ class WeatherService
         end
       end
 
-      data || fallback_weather_data(lat, lon)
+      data || fallback_weather_data(lat, lon, unit_system)
     rescue => e
       Rails.logger.error "WeatherService error: #{e.message}"
-      fallback_weather_data(lat, lon)
+      fallback_weather_data(lat, lon, unit_system)
     end
 
     def search_cities(query)
@@ -237,18 +237,21 @@ class WeatherService
       [ moonrise.strftime("%Y-%m-%dT%H:%M"), moonset.strftime("%Y-%m-%dT%H:%M") ]
     end
 
-    def fetch_weather_from_api(lat, lon)
+    def fetch_weather_from_api(lat, lon, unit_system)
       api_key = ENV["OPENWEATHERMAP_API_KEY"] || Rails.application.credentials.openweathermap_api_key
 
       if api_key.present?
-        fetch_from_openweathermap(lat, lon, api_key)
+        fetch_from_openweathermap(lat, lon, api_key, unit_system)
       else
-        fetch_from_open_meteo(lat, lon)
+        fetch_from_open_meteo(lat, lon, unit_system)
       end
     end
 
-    def fetch_from_open_meteo(lat, lon)
+    def fetch_from_open_meteo(lat, lon, unit_system)
       url = "https://api.open-meteo.com/v1/forecast?latitude=#{lat}&longitude=#{lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,sunrise,sunset&timezone=auto"
+      if unit_system == "imperial"
+        url += "&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch"
+      end
 
       uri = URI(url)
       http = Net::HTTP.new(uri.host, uri.port)
@@ -265,8 +268,9 @@ class WeatherService
       end
     end
 
-    def fetch_from_openweathermap(lat, lon, api_key)
-      url = "https://api.openweathermap.org/data/3.0/onecall?lat=#{lat}&lon=#{lon}&units=metric&appid=#{api_key}"
+    def fetch_from_openweathermap(lat, lon, api_key, unit_system)
+      units = (unit_system == "imperial") ? "imperial" : "metric"
+      url = "https://api.openweathermap.org/data/3.0/onecall?lat=#{lat}&lon=#{lon}&units=#{units}&appid=#{api_key}"
 
       uri = URI(url)
       http = Net::HTTP.new(uri.host, uri.port)
@@ -277,7 +281,7 @@ class WeatherService
 
       if response.is_a?(Net::HTTPSuccess)
         body = JSON.parse(response.body)
-        translate_owm_to_open_meteo(body)
+        translate_owm_to_open_meteo(body, unit_system)
       else
         Rails.logger.error "OpenWeatherMap API failure: #{response.code} #{response.message}"
         nil
@@ -287,7 +291,7 @@ class WeatherService
       nil
     end
 
-    def translate_owm_to_open_meteo(body)
+    def translate_owm_to_open_meteo(body, unit_system)
       return nil unless body.is_a?(Hash)
 
       timezone = body["timezone"] || "UTC"
@@ -300,9 +304,21 @@ class WeatherService
 
       # Precipitation calculation (rain + snow 1h values)
       current_precip = (current_data.dig("rain", "1h") || 0.0) + (current_data.dig("snow", "1h") || 0.0)
+      rain = current_data.dig("rain", "1h") || 0.0
+      snow = current_data.dig("snow", "1h") || 0.0
 
-      # OpenWeatherMap wind speed is in m/s. Convert to km/h by multiplying by 3.6.
-      wind_kmh = (current_data["wind_speed"].to_f * 3.6).round(1)
+      if unit_system == "imperial"
+        current_precip = (current_precip / 25.4).round(2)
+        rain = (rain / 25.4).round(2)
+        snow = (snow / 25.4).round(2)
+      end
+
+      # OpenWeatherMap wind speed. If imperial, it is already in mph. Otherwise, convert from m/s to km/h by multiplying by 3.6.
+      wind_speed = if unit_system == "imperial"
+        current_data["wind_speed"].to_f.round(1)
+      else
+        (current_data["wind_speed"].to_f * 3.6).round(1)
+      end
 
       hourly_data = body["hourly"] || []
       hourly_times = []
@@ -342,6 +358,9 @@ class WeatherService
         daily_temp_mins << day.dig("temp", "min").to_f
 
         day_precip = (day["rain"] || 0.0) + (day["snow"] || 0.0)
+        if unit_system == "imperial"
+          day_precip = (day_precip / 25.4).round(2)
+        end
         daily_precip_sums << day_precip.to_f
 
         daily_sunrises << (Time.at(day["sunrise"]).in_time_zone(timezone).strftime("%Y-%m-%dT%H:%M") rescue nil)
@@ -362,11 +381,11 @@ class WeatherService
           "apparent_temperature" => current_data["feels_like"].to_f,
           "is_day" => (current_data["dt"] >= current_data["sunrise"] && current_data["dt"] <= current_data["sunset"] ? 1 : 0 rescue 1),
           "precipitation" => current_precip,
-          "rain" => current_data.dig("rain", "1h") || 0.0,
+          "rain" => rain,
           "showers" => 0.0,
-          "snowfall" => current_data.dig("snow", "1h") || 0.0,
+          "snowfall" => snow,
           "weather_code" => current_wmo,
-          "wind_speed_10m" => wind_kmh
+          "wind_speed_10m" => wind_speed
         },
         "hourly" => {
           "time" => hourly_times,
@@ -469,34 +488,40 @@ class WeatherService
       "Coordinates: #{lat}, #{lon}"
     end
 
-    def fallback_weather_data(lat, lon)
+    def fallback_weather_data(lat, lon, unit_system = "imperial")
+      is_imperial = (unit_system == "imperial")
+
+      temp_conv = ->(c) { is_imperial ? (c * 9.0 / 5.0 + 32).round(1) : c }
+      wind_conv = ->(k) { is_imperial ? (k * 0.621371).round(1) : k }
+      prec_conv = ->(m) { is_imperial ? (m / 25.4).round(2) : m }
+
       {
         "latitude" => lat,
         "longitude" => lon,
         "current" => {
-          "temperature_2m" => 21.5,
+          "temperature_2m" => temp_conv.call(21.5),
           "relative_humidity_2m" => 64,
-          "apparent_temperature" => 20.8,
+          "apparent_temperature" => temp_conv.call(20.8),
           "is_day" => 1,
-          "precipitation" => 0.0,
-          "rain" => 0.0,
-          "showers" => 0.0,
-          "snowfall" => 0.0,
+          "precipitation" => prec_conv.call(0.0),
+          "rain" => prec_conv.call(0.0),
+          "showers" => prec_conv.call(0.0),
+          "snowfall" => prec_conv.call(0.0),
           "weather_code" => 2, # Partly Cloudy
-          "wind_speed_10m" => 12.5
+          "wind_speed_10m" => wind_conv.call(12.5)
         },
         "hourly" => {
           "time" => Array.new(24) { |i| (Time.current + i.hours).strftime("%Y-%m-%dT%H:00") },
-          "temperature_2m" => Array.new(24) { |i| 21.5 + Math.sin(i / 3.0) * 3 },
+          "temperature_2m" => Array.new(24) { |i| temp_conv.call(21.5 + Math.sin(i / 3.0) * 3) },
           "precipitation_probability" => Array.new(24) { |i| [ 0, 10, 20, 30 ][i % 4] },
           "weather_code" => Array.new(24) { 2 }
         },
         "daily" => {
           "time" => Array.new(7) { |i| (Date.current + i.days).strftime("%Y-%m-%d") },
           "weather_code" => [ 2, 1, 0, 3, 61, 80, 2 ],
-          "temperature_2m_max" => [ 24, 25, 27, 23, 20, 22, 24 ],
-          "temperature_2m_min" => [ 15, 16, 17, 14, 12, 13, 15 ],
-          "precipitation_sum" => [ 0.0, 0.0, 0.0, 0.5, 4.2, 1.8, 0.0 ],
+          "temperature_2m_max" => [ 24, 25, 27, 23, 20, 22, 24 ].map { |t| temp_conv.call(t) },
+          "temperature_2m_min" => [ 15, 16, 17, 14, 12, 13, 15 ].map { |t| temp_conv.call(t) },
+          "precipitation_sum" => [ 0.0, 0.0, 0.0, 0.5, 4.2, 1.8, 0.0 ].map { |p| prec_conv.call(p) },
           "sunrise" => Array.new(7) { |i| (Time.current.beginning_of_day + i.days + 6.hours).strftime("%Y-%m-%dT%H:%M") },
           "sunset" => Array.new(7) { |i| (Time.current.beginning_of_day + i.days + 20.hours).strftime("%Y-%m-%dT%H:%M") },
           "moonrise" => Array.new(7) { |i| (Time.current.beginning_of_day + i.days + 22.hours).strftime("%Y-%m-%dT%H:%M") },

@@ -9,7 +9,8 @@ export default class extends Controller {
     temp: String,
     desc: String,
     time: String,
-    icon: String
+    icon: String,
+    unitSymbol: { type: String, default: "°C" }
   }
 
   connect() {
@@ -151,7 +152,7 @@ export default class extends Controller {
         ${this.hasTimeValue ? `<p class="text-sm font-semibold text-slate-500 mt-0.5">${this.timeValue}</p>` : ''}
         <div class="flex items-center gap-1.5 mt-1.5">
           ${this.hasIconValue ? `<i data-lucide="${this.iconValue}" class="w-4 h-4 text-cyan-600 shrink-0"></i>` : ''}
-          <span class="text-lg font-extrabold text-slate-800">${this.tempValue}°C</span>
+          <span class="text-lg font-extrabold text-slate-800">${this.tempValue}${this.unitSymbolValue}</span>
           <span class="text-xs font-semibold px-1.5 py-0.5 rounded bg-cyan-100 text-cyan-800">${this.descValue}</span>
         </div>
         <p class="text-[10px] text-slate-400 mt-1">Coordinates: ${lat.toFixed(4)}, ${lon.toFixed(4)}</p>

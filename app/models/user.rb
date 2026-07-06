@@ -7,4 +7,5 @@ class User < ApplicationRecord
 
   validates :email_address, presence: true, uniqueness: { case_sensitive: false }, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :password, length: { minimum: 6 }, allow_nil: true
+  validates :unit_system, inclusion: { in: %w[imperial metric] }
 end

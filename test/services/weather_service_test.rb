@@ -21,7 +21,7 @@ class WeatherServiceTest < ActiveSupport::TestCase
   test "get_weather fetches and returns weather data" do
     class << WeatherService
       alias_method :original_fetch_weather, :fetch_weather_from_api
-      def fetch_weather_from_api(lat, lon)
+      def fetch_weather_from_api(lat, lon, unit_system = "imperial")
         { "current" => { "temperature_2m" => 22.5 } }
       end
     end
@@ -104,16 +104,20 @@ class WeatherServiceTest < ActiveSupport::TestCase
 
   test "get_weather returns fallback data when API returns nil" do
     stub_weather_service(:fetch_weather_from_api, nil) do
-      result = WeatherService.get_weather(41.8781, -87.6298, force_refresh: true)
+      result = WeatherService.get_weather(41.8781, -87.6298, unit_system: "metric", force_refresh: true)
       assert result["is_fallback"]
       assert_equal 21.5, result["current"]["temperature_2m"]
+
+      result_imp = WeatherService.get_weather(41.8781, -87.6298, unit_system: "imperial", force_refresh: true)
+      assert result_imp["is_fallback"]
+      assert_equal 70.7, result_imp["current"]["temperature_2m"]
     end
   end
 
   test "get_weather returns fallback data when API raises network exception" do
-    err_proc = ->(lat, lon) { raise Net::OpenTimeout.new("timeout") }
+    err_proc = ->(lat, lon, *args) { raise Net::OpenTimeout.new("timeout") }
     stub_weather_service(:fetch_weather_from_api, err_proc) do
-      result = WeatherService.get_weather(41.8781, -87.6298, force_refresh: true)
+      result = WeatherService.get_weather(41.8781, -87.6298, unit_system: "metric", force_refresh: true)
       assert result["is_fallback"]
       assert_equal 21.5, result["current"]["temperature_2m"]
     end
@@ -128,10 +132,10 @@ class WeatherServiceTest < ActiveSupport::TestCase
   end
 
   test "get_weather force_refresh deletes cache key" do
-    cache_key = "weather_forecast_41.8781_-87.6298"
+    cache_key = "weather_forecast_41.8781_-87.6298_imperial"
     Rails.cache.write(cache_key, { "current" => { "temperature_2m" => 10.0 } })
 
-    mock_api = ->(lat, lon) { { "current" => { "temperature_2m" => 25.0 } } }
+    mock_api = ->(lat, lon, *args) { { "current" => { "temperature_2m" => 25.0 } } }
     stub_weather_service(:fetch_weather_from_api, mock_api) do
       result = WeatherService.get_weather(41.8781, -87.6298, force_refresh: true)
       assert_equal 25.0, result["current"]["temperature_2m"]
@@ -314,7 +318,7 @@ class WeatherServiceTest < ActiveSupport::TestCase
       ]
     }
 
-    result = WeatherService.send(:translate_owm_to_open_meteo, owm_payload)
+    result = WeatherService.send(:translate_owm_to_open_meteo, owm_payload, "metric")
 
     assert_equal 41.8781, result["latitude"]
     assert_equal -87.6298, result["longitude"]
@@ -340,6 +344,68 @@ class WeatherServiceTest < ActiveSupport::TestCase
     assert_equal 15.0, result["daily"]["temperature_2m_min"].first
     assert_equal 2.5, result["daily"]["precipitation_sum"].first
     assert_equal 0.25, result["daily"]["moon_phase"].first
+  end
+
+  test "translate_owm_to_open_meteo correctly maps One Call 3.0 response format in imperial" do
+    now = Time.current.beginning_of_hour
+    owm_payload = {
+      "lat" => 41.8781,
+      "lon" => -87.6298,
+      "timezone" => "America/Chicago",
+      "current" => {
+        "temp" => 68.9,
+        "feels_like" => 67.2,
+        "humidity" => 60,
+        "wind_speed" => 11.2, # mph
+        "dt" => now.to_i,
+        "sunrise" => (now - 6.hours).to_i,
+        "sunset" => (now + 6.hours).to_i,
+        "rain" => { "1h" => 25.4 }, # 25.4 mm -> 1.0 inch
+        "weather" => [ { "id" => 800, "description" => "clear sky" } ]
+      },
+      "hourly" => [
+        {
+          "dt" => now.to_i,
+          "temp" => 68.9,
+          "pop" => 0.1,
+          "weather" => [ { "id" => 800 } ]
+        }
+      ],
+      "daily" => [
+        {
+          "dt" => now.to_i,
+          "temp" => { "max" => 77.0, "min" => 59.0 },
+          "rain" => 25.4, # 25.4 mm -> 1.0 inch
+          "sunrise" => (now - 6.hours).to_i,
+          "sunset" => (now + 6.hours).to_i,
+          "moonrise" => (now + 8.hours).to_i,
+          "moonset" => (now - 4.hours).to_i,
+          "moon_phase" => 0.25,
+          "weather" => [ { "id" => 800 } ]
+        }
+      ]
+    }
+
+    result = WeatherService.send(:translate_owm_to_open_meteo, owm_payload, "imperial")
+
+    assert_equal 41.8781, result["latitude"]
+    assert_equal -87.6298, result["longitude"]
+    assert_equal "America/Chicago", result["timezone"]
+
+    # Current
+    assert_equal 68.9, result["current"]["temperature_2m"]
+    assert_equal 67.2, result["current"]["apparent_temperature"]
+    assert_equal 60, result["current"]["relative_humidity_2m"]
+    assert_equal 11.2, result["current"]["wind_speed_10m"] # remains 11.2 mph
+    assert_equal 1.0, result["current"]["precipitation"] # 25.4 mm -> 1.0 inch
+    assert_equal 0, result["current"]["weather_code"]
+    assert_equal 1, result["current"]["is_day"]
+
+    # Daily
+    assert_equal 1, result["daily"]["time"].size
+    assert_equal 77.0, result["daily"]["temperature_2m_max"].first
+    assert_equal 59.0, result["daily"]["temperature_2m_min"].first
+    assert_equal 1.0, result["daily"]["precipitation_sum"].first # 25.4 mm -> 1.0 inch
   end
 
   test "get_weather replaces GMT with UTC in timezone abbreviation" do
