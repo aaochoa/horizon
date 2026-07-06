@@ -17,8 +17,13 @@ class WeatherService
         fetch_weather_from_api(lat, lon)
       end
 
-      if data && data["daily"]
-        inject_lunar_data!(data)
+      if data
+        if data["timezone_abbreviation"].is_a?(String)
+          data["timezone_abbreviation"] = data["timezone_abbreviation"].gsub("GMT", "UTC")
+        end
+        if data["daily"]
+          inject_lunar_data!(data)
+        end
       end
 
       data || fallback_weather_data(lat, lon)
@@ -287,6 +292,7 @@ class WeatherService
 
       timezone = body["timezone"] || "UTC"
       timezone_abbr = Time.current.in_time_zone(timezone).strftime("%Z") rescue "UTC"
+      timezone_abbr = timezone_abbr.gsub("GMT", "UTC") if timezone_abbr.is_a?(String)
 
       current_data = body["current"] || {}
       current_weather = current_data["weather"]&.first || {}

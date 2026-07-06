@@ -1,15 +1,19 @@
-<!-- Hourly Forecast Card -->
-<div class="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/40 backdrop-blur-md p-6 shadow-lg dark:shadow-xl space-y-4 transition-colors duration-300">
-  <div class="flex items-center justify-between">
-    <h3 class="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2">
-      <i data-lucide="clock" class="w-5 h-5 text-cyan-500 dark:text-cyan-400"></i>
-      <span>Hourly Forecast</span>
-    </h3>
-    <span class="text-xs text-slate-500 dark:text-slate-400">Next 12 Hours</span>
-  </div>
+<details class="group rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/40 backdrop-blur-md p-6 shadow-lg dark:shadow-xl transition-colors duration-300 [&_summary::-webkit-details-marker]:hidden">
+  <summary class="flex items-center justify-between cursor-pointer focus:outline-none list-none select-none">
+    <div class="flex items-center gap-2">
+      <h3 class="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2">
+        <i data-lucide="clock" class="w-5 h-5 text-cyan-500 dark:text-cyan-400"></i>
+        <span>Hourly Forecast</span>
+      </h3>
+      <span class="text-xs text-slate-500 dark:text-slate-400">Next 12 Hours</span>
+    </div>
+    <div class="text-slate-400 dark:text-slate-500 transition-transform duration-300 group-open:rotate-180">
+      <i data-lucide="chevron-down" class="w-5 h-5"></i>
+    </div>
+  </summary>
 
   <!-- Horizontal scrolling list of hourly data -->
-  <div class="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-800 scrollbar-track-transparent">
+  <div class="mt-4 flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-800 scrollbar-track-transparent">
     <%
       location_zone = @weather["timezone"] ? Time.find_zone(@weather["timezone"]) : nil
       location_zone ||= Time.zone
@@ -45,4 +49,4 @@
       </div>
     <% end %>
   </div>
-</div>
+</details>

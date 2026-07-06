@@ -8,17 +8,24 @@
   }
 %>
 
-<div class="relative overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/40 backdrop-blur-md p-6 shadow-lg dark:shadow-xl transition-colors duration-300">
+<details class="group relative overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/40 backdrop-blur-md p-6 shadow-lg dark:shadow-xl transition-colors duration-300 [&_summary::-webkit-details-marker]:hidden">
   <!-- Decorative background glow -->
   <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
-  <!-- Header -->
-  <div class="flex items-center gap-2 mb-4">
-    <div class="p-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/60">
-      <i data-lucide="moon-star" class="w-5 h-5"></i>
+  <summary class="flex items-center justify-between cursor-pointer focus:outline-none list-none select-none">
+    <!-- Header -->
+    <div class="flex items-center gap-2">
+      <div class="p-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/60">
+        <i data-lucide="moon-star" class="w-5 h-5"></i>
+      </div>
+      <h3 class="text-sm font-bold text-slate-950 dark:text-slate-200 uppercase tracking-wider">Lunar Cycle</h3>
     </div>
-    <h3 class="text-sm font-bold text-slate-950 dark:text-slate-200 uppercase tracking-wider">Lunar Cycle</h3>
-  </div>
+    <div class="text-slate-400 dark:text-slate-500 transition-transform duration-300 group-open:rotate-180">
+      <i data-lucide="chevron-down" class="w-5 h-5"></i>
+    </div>
+  </summary>
+
+  <div class="mt-4 space-y-6">
 
   <!-- Current Moon Details -->
   <div class="flex items-center justify-between gap-4 mb-6">
@@ -91,4 +98,4 @@
       <% end %>
     </div>
   </div>
-</div>
+</details>
