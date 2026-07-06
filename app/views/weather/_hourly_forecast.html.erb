@@ -36,7 +36,7 @@
         <div class="flex justify-center">
           <i data-lucide="<%= h_info[:icon] %>" class="w-8 h-8 <%= is_current ? 'text-cyan-500 dark:text-cyan-400' : 'text-cyan-600 dark:text-cyan-400' %> stroke-[1.5]"></i>
         </div>
-        <div class="text-sm font-bold <%= is_current ? 'text-cyan-700 dark:text-cyan-300 font-extrabold' : 'text-slate-900 dark:text-white' %>"><%= temp %>°</div>
+        <div class="text-sm font-bold <%= is_current ? 'text-cyan-700 dark:text-cyan-300 font-extrabold' : 'text-slate-900 dark:text-white' %>" data-unit-type="temp" data-metric-value="<%= metric_temp(hourly["temperature_2m"][idx]) %>"><%= temp %>°</div>
         
         <% if prob && prob > 0 %>
           <div class="flex items-center justify-center gap-0.5 text-[10px] font-bold text-cyan-600 dark:text-cyan-400">

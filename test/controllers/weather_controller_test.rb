@@ -35,7 +35,7 @@ class WeatherControllerTest < ActionDispatch::IntegrationTest
       alias_method :real_search_cities, :search_cities
       alias_method :real_reverse_geocode, :reverse_geocode
 
-      def get_weather(lat, lon, force_refresh: false)
+      def get_weather(lat, lon, unit_system: "imperial", force_refresh: false)
         @@weather_mock
       end
 

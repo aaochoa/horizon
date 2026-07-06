@@ -9,19 +9,24 @@ export default class extends Controller {
     temp: String,
     desc: String,
     time: String,
-    icon: String
+    icon: String,
+    unitSymbol: { type: String, default: "°C" }
   }
 
   connect() {
     this.initMap()
     this.themeChangedListener = this.onThemeChanged.bind(this)
     document.addEventListener("theme-changed", this.themeChangedListener)
+
+    this.unitsChangedListener = this.onUnitsChanged.bind(this)
+    document.addEventListener("units-changed", this.unitsChangedListener)
   }
 
   disconnect() {
     this.destroyMap()
     if (this.updateTimeout) clearTimeout(this.updateTimeout)
     document.removeEventListener("theme-changed", this.themeChangedListener)
+    document.removeEventListener("units-changed", this.unitsChangedListener)
   }
 
   onThemeChanged(event) {
@@ -38,6 +43,26 @@ export default class extends Controller {
         maxZoom: 20,
         className: "map-tiles"
       }).addTo(this.map)
+    }
+  }
+
+  onUnitsChanged(event) {
+    const { unitSymbol, temp } = event.detail
+    this.unitSymbolValue = unitSymbol
+    this.tempValue = temp
+
+    if (this.marker) {
+      const markerElement = this.marker.getElement()
+      if (markerElement) {
+        const tempSpan = markerElement.querySelector('span.relative')
+        if (tempSpan) {
+          tempSpan.textContent = `${Math.round(parseFloat(temp))}°`
+        }
+      }
+
+      const popupContent = this.getPopupContent(this.latValue, this.lonValue)
+      this.marker.setPopupContent(popupContent)
+      if (typeof lucide !== 'undefined') lucide.createIcons()
     }
   }
 
@@ -146,15 +171,19 @@ export default class extends Controller {
 
   getPopupContent(lat, lon) {
     return `
-      <div class="p-2 text-slate-900 font-sans">
-        <h4 class="font-bold text-sm leading-tight">${this.nameValue}</h4>
-        ${this.hasTimeValue ? `<p class="text-sm font-semibold text-slate-500 mt-0.5">${this.timeValue}</p>` : ''}
-        <div class="flex items-center gap-1.5 mt-1.5">
-          ${this.hasIconValue ? `<i data-lucide="${this.iconValue}" class="w-4 h-4 text-cyan-600 shrink-0"></i>` : ''}
-          <span class="text-lg font-extrabold text-slate-800">${this.tempValue}°C</span>
-          <span class="text-xs font-semibold px-1.5 py-0.5 rounded bg-cyan-100 text-cyan-800">${this.descValue}</span>
+      <div class="flex items-center justify-between gap-4 p-1 text-slate-900 dark:text-slate-100 font-sans min-w-[260px] max-w-[320px]">
+        <div class="flex-grow text-left">
+          <h4 class="font-bold text-sm leading-tight text-slate-900 dark:text-slate-100">${this.nameValue}</h4>
+          ${this.hasTimeValue ? `<p class="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1">${this.timeValue}</p>` : ''}
+          <div class="flex items-center gap-2 mt-2">
+            <span class="text-2xl font-black text-slate-800 dark:text-slate-200">${this.tempValue}${this.unitSymbolValue}</span>
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20">${this.descValue}</span>
+          </div>
+          <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-2.5">Coordinates: ${lat.toFixed(4)}, ${lon.toFixed(4)}</p>
         </div>
-        <p class="text-[10px] text-slate-400 mt-1">Coordinates: ${lat.toFixed(4)}, ${lon.toFixed(4)}</p>
+        ${this.hasIconValue ? `
+          <i data-lucide="${this.iconValue}" class="w-16 h-16 text-cyan-500 dark:text-cyan-400 shrink-0 stroke-[1.2]"></i>
+        ` : ''}
       </div>
     `
   }

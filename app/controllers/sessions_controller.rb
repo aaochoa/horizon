@@ -10,7 +10,8 @@ class SessionsController < ApplicationController
       start_new_session_for user
       redirect_to after_authentication_url, status: :see_other
     else
-      redirect_to new_session_path, alert: "Try another email address or password.", status: :see_other
+      flash.now[:alert] = "Try another email address or password."
+      render :new, status: :unprocessable_entity
     end
   end
 

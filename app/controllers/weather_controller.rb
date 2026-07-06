@@ -9,6 +9,7 @@ class WeatherController < ApplicationController
     @weather = WeatherService.get_weather(
       @latitude.to_f.round(4),
       @longitude.to_f.round(4),
+      unit_system: unit_system,
       force_refresh: params[:refresh] == "true"
     )
 
